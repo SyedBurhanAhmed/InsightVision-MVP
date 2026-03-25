@@ -1,0 +1,49 @@
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\badge.tsx[24m[0m
+[0m  [2m46:17[22m  [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\button.tsx[24m[0m
+[0m  [2m58:18[22m  [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\calendar.tsx[24m[0m
+[0m  [2m63:44[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\chart.tsx[24m[0m
+[0m  [2m121:6[22m   [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m175:29[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m175:41[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m252:6[22m   [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m267:27[22m  [31merror[39m  Unexpected any. Specify a different type  [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\form.tsx[24m[0m
+[0m  [2m160:3[22m  [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\navigation-menu.tsx[24m[0m
+[0m  [2m167:3[22m  [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\resizable.tsx[24m[0m
+[0m   [2m5:1[22m   [31merror[39m  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  [2m@typescript-eslint/ban-ts-comment[22m[0m
+[0m  [2m13:25[22m  [31merror[39m  Unexpected any. Specify a different type                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m28:25[22m  [31merror[39m  Unexpected any. Specify a different type                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m  [2m36:25[22m  [31merror[39m  Unexpected any. Specify a different type                                                                             [2m@typescript-eslint/no-explicit-any[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\sidebar.tsx[24m[0m
+[0m  [2m612:26[22m  [31merror[39m  Error: Cannot call impure function during render[0m
+[0m[0m
+[0m`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).[0m
+[0m[0m
+[0mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\sidebar.tsx:612:26[0m
+[0m  610 |   // Random width between 50 to 90%.[0m
+[0m  611 |   const width = React.useMemo(() => {[0m
+[0m> 612 |     return `${Math.floor(Math.random() * 40) + 50}%`;[0m
+[0m      |                          ^^^^^^^^^^^^^ Cannot call impure function[0m
+[0m  613 |   }, []);[0m
+[0m  614 |[0m
+[0m  615 |   return (  [2mreact-hooks/purity[22m[0m
+[0m  [2m726:3[22m   [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[4mD:\University\Final Year Project\InsightVision MVP\frontend\src\components\ui\toggle.tsx[24m[0m
+[0m  [2m47:18[22m  [31merror[39m  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  [2mreact-refresh/only-export-components[22m[0m
+[0m[0m
+[0m[31m[1m✖ 17 problems (17 errors, 0 warnings)[22m[39m[0m
+[0m[31m[1m[22m[39m[0m

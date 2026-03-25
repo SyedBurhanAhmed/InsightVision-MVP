@@ -60,7 +60,7 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        Chevron: ({ className, ...props }: any) => {
+        Chevron: ({ className, ...props }: React.ComponentProps<"svg"> & { orientation?: string }) => {
           if (props.orientation === "left") {
             return <ChevronLeft className={cn("size-4", className)} {...props} />
           }
