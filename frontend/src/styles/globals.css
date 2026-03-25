@@ -1,0 +1,244 @@
+
+:root {
+  /* InsightVision Custom Theme Variables */
+  --cherry-red: #DC143C;
+  --deep-black: #000000;
+  --neon-red: #FF0040;
+  --electric-blue: #00D4FF;
+  --lime-green: #39FF14;
+  --purple-violet: #9D4EDD;
+  --cyan: #00FFFF;
+  --orange: #FF6B35;
+  --yellow: #FFD60A;
+  --teal: #06D6A0;
+  --soft-pink: #FFB3C6;
+  
+  /* Base Colors */
+  --font-size: 16px;
+  --background: #000000;
+  --foreground: #FFFFFF;
+  --card: rgba(20, 20, 20, 0.8);
+  --card-foreground: #FFFFFF;
+  --popover: rgba(20, 20, 20, 0.95);
+  --popover-foreground: #FFFFFF;
+  --primary: var(--cherry-red);
+  --primary-foreground: #FFFFFF;
+  --secondary: rgba(220, 20, 60, 0.2);
+  --secondary-foreground: #FFFFFF;
+  --muted: rgba(255, 255, 255, 0.1);
+  --muted-foreground: rgba(255, 255, 255, 0.6);
+  --accent: var(--cherry-red);
+  --accent-foreground: #FFFFFF;
+  --destructive: #d4183d;
+  --destructive-foreground: #ffffff;
+  --border: rgba(220, 20, 60, 0.3);
+  --input: rgba(255, 255, 255, 0.1);
+  --input-background: rgba(255, 255, 255, 0.05);
+  --switch-background: rgba(255, 255, 255, 0.2);
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+  --ring: var(--cherry-red);
+  --radius: 0.75rem;
+  
+  /* Chart Colors */
+  --chart-1: var(--electric-blue);
+  --chart-2: var(--lime-green);
+  --chart-3: var(--purple-violet);
+  --chart-4: var(--orange);
+  --chart-5: var(--yellow);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-background: var(--input-background);
+  --color-switch-background: var(--switch-background);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply text-foreground;
+    background: linear-gradient(135deg, var(--cherry-red) 0%, var(--deep-black) 30%, var(--deep-black) 100%);
+    background-attachment: fixed;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    min-height: 100vh;
+  }
+}
+
+/**
+ * Base typography - Modern Sans-Serif
+ */
+@layer base {
+  :where(:not(:has([class*=' text-']), :not(:has([class^='text-'])))) {
+    h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.4;
+      letter-spacing: -0.02em;
+    }
+
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    h3 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    h4 {
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    button {
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.5;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    input, textarea {
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    }
+
+    p {
+      line-height: 1.7;
+    }
+  }
+}
+
+html {
+  font-size: var(--font-size);
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--cherry-red);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-red);
+}
+
+/* Custom Glow Effects */
+.glow-red {
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+}
+
+.glow-blue {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+}
+
+.glow-green {
+  box-shadow: 0 0 20px rgba(57, 255, 20, 0.5);
+}
+
+/* Card Styles */
+.premium-card {
+  background: rgba(20, 20, 20, 0.8);
+  border: 1px solid rgba(220, 20, 60, 0.3);
+  border-radius: var(--radius);
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+}
+
+.premium-card:hover {
+  border-color: var(--cherry-red);
+  box-shadow: 0 8px 32px rgba(220, 20, 60, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Button Styles */
+.btn-primary {
+  background: linear-gradient(135deg, var(--cherry-red) 0%, #8B0000 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 16px rgba(220, 20, 60, 0.3);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 6px 24px rgba(220, 20, 60, 0.5);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: white;
+  border: 2px solid var(--cherry-red);
+  border-radius: var(--radius);
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(220, 20, 60, 0.1);
+  box-shadow: 0 0 20px rgba(220, 20, 60, 0.3);
+}
+
+/* Smooth Transitions */
+* {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
