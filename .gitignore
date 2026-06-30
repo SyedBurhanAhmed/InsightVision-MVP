@@ -66,3 +66,9 @@ pip-selfcheck.json
 *.ntvs*
 *.njsproj
 *.sln
+
+# --- Data Storage ---
+data/images/*
+data/annotations/*
+!data/images/.gitkeep
+!data/annotations/.gitkeep

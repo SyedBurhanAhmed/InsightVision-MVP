@@ -1,0 +1,22 @@
+# Web Server
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+python-multipart>=0.0.6
+
+# Machine Learning & Computer Vision
+torch>=2.0.0
+torchvision>=0.15.0
+transformers>=4.30.0
+# Using PyPI fallback for GroundingDINO to avoid complex C++ build issues on Windows CPU for now
+# groundingdino-py>=0.4.0 (Commented out: conflicts with newer supervision versions)
+# SAM2 is not officially on PyPI. Uncomment to build from source (requires C++ build tools & CUDA):
+# git+https://github.com/facebookresearch/segment-anything-2.git
+supervision[all]>=0.19.0
+opencv-python>=4.8.0
+numpy>=1.24.0
+Pillow>=10.0.0
+lapx>=0.5.5
+
+# Caching/Other
+redis>=5.0.0

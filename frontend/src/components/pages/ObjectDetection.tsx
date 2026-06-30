@@ -8,14 +8,8 @@ const objectClasses = [
   { id: 4, name: 'Bag', count: 0, enabled: false, color: '#9D4EDD' },
 ];
 
-const detectedObjects = [
-  { id: 1, class: 'Person', confidence: 0.98, bbox: [120, 80, 200, 350], color: '#FF0040' },
-  { id: 2, class: 'Person', confidence: 0.95, bbox: [450, 100, 180, 320], color: '#FF0040' },
-  { id: 3, class: 'Person', confidence: 0.92, bbox: [750, 120, 160, 300], color: '#FF0040' },
-  { id: 4, class: 'Red Car', confidence: 0.94, bbox: [300, 250, 280, 180], color: '#00FFFF' },
-  { id: 5, class: 'Red Car', confidence: 0.89, bbox: [650, 280, 250, 160], color: '#00FFFF' },
-  { id: 6, class: 'Safety Vest', confidence: 0.87, bbox: [180, 320, 80, 100], color: '#39FF14' },
-];
+// Using real backend detection instead of mock data
+// We will store detected objects in state.
 
 export default function ObjectDetection() {
   const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
@@ -28,6 +22,13 @@ export default function ObjectDetection() {
   const [customClasses, setCustomClasses] = useState<{ id: number; name: string; color: string }[]>([]);
   const [newClassInput, setNewClassInput] = useState('');
   const [justAdded, setJustAdded] = useState<string | null>(null);
+  
+  // Real detection states
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [detectedObjects, setDetectedObjects] = useState<any[]>([]);
+  const [isDetecting, setIsDetecting] = useState(false);
+  const [latencyMs, setLatencyMs] = useState(0);
 
   const customColors = ['#FF6B35', '#06D6A0', '#FFD60A', '#00D4FF', '#FF0040', '#9D4EDD', '#00FFFF'];
 
@@ -51,6 +52,54 @@ export default function ObjectDetection() {
     obj => obj.confidence >= confidenceThreshold && enabledClasses[obj.class]
   );
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setImageUrl(URL.createObjectURL(file));
+      setDetectedObjects([]);
+    }
+  };
+
+  const handleDetect = async () => {
+    if (!selectedImage) return;
+    
+    // Collect all enabled prompts
+    const activePrompts = [...objectClasses, ...customClasses]
+      .filter(cls => enabledClasses[cls.name])
+      .map(cls => cls.name)
+      .join(", ");
+      
+    if (!activePrompts) {
+      alert("Please enable at least one class to detect.");
+      return;
+    }
+
+    setIsDetecting(true);
+    const formData = new FormData();
+    formData.append("image", selectedImage);
+    formData.append("prompt", activePrompts);
+    formData.append("conf_threshold", confidenceThreshold.toString());
+
+    try {
+      // Assuming backend is running on localhost:8080
+      const res = await fetch("http://localhost:8080/api/detect", {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) throw new Error(await res.text());
+      
+      const data = await res.json();
+      setDetectedObjects(data.objects || []);
+      setLatencyMs(data.inference_ms || 0);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to detect objects. Ensure backend is running.");
+    } finally {
+      setIsDetecting(false);
+    }
+  };
+
   return (
     <div className="h-screen p-4 flex flex-col overflow-hidden">
       {/* Header */}
@@ -67,58 +116,107 @@ export default function ObjectDetection() {
         <div className="flex flex-col gap-4 overflow-y-auto pr-2 pb-4">
           {/* Main Detection Area */}
           <div className="premium-card p-4">
-            <div className="w-full max-h-[60vh] bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(0,212,255,0.3)] mx-auto flex items-center justify-center" style={{ aspectRatio: '16/9' }}>
-              {/* Simulated Scene */}
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black w-full h-full">
-                {/* Scene Background */}
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-gray-700 to-transparent"></div>
-                </div>
-
-                {/* Bounding Boxes / Masks */}
-                {showBoundingBoxes && filteredObjects.map(obj => (
-                  <div
-                    key={obj.id}
-                    className="absolute"
-                    style={{
-                      left: `${obj.bbox[0]}px`,
-                      top: `${obj.bbox[1]}px`,
-                      width: `${obj.bbox[2]}px`,
-                      height: `${obj.bbox[3]}px`,
-                      border: `3px solid ${obj.color}`,
-                      backgroundColor: showMasks ? `${obj.color}40` : 'transparent',
-                      boxShadow: showMasks ? 'none' : `0 0 20px ${obj.color}80`,
-                      borderRadius: '4px',
-                    }}
-                  >
-                    {showLabels && (
+            <div className="w-full max-h-[60vh] bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(0,212,255,0.3)] mx-auto flex items-center justify-center" style={{ minHeight: '40vh' }}>
+              {/* Scene Background */}
+              {imageUrl ? (
+                <div className="relative inline-block max-w-full max-h-[60vh]">
+                  <img id="detected-image" src={imageUrl} alt="Uploaded" className="max-w-full max-h-[60vh] block" />
+                  
+                  {/* Bounding Boxes / Masks */}
+                  {showBoundingBoxes && filteredObjects.map((obj, idx) => {
+                    // Determine color based on class
+                    const classDef = [...objectClasses, ...customClasses].find(c => c.name === obj.class);
+                    const objColor = classDef ? classDef.color : obj.color;
+                    
+                    // We need to scale the boxes from original image coordinates to the displayed coordinates
+                    // For a robust solution, we use percentage values based on original image dimensions!
+                    // Wait, the backend returns absolute coordinates. We should convert to % based on image natural width/height
+                    // Let's do that via a small inline script or by assuming the image container perfectly scales down.
+                    // If the container scales perfectly, % values work best.
+                    return (
                       <div
-                        className="absolute -top-7 left-0 px-2 py-1 rounded text-xs font-semibold text-white"
-                        style={{ backgroundColor: obj.color }}
+                        key={obj.id || idx}
+                        className="absolute"
+                        style={{
+                          left: `calc(100% * ${obj.bbox[0]} / var(--img-natural-width, 1000))`,
+                          top: `calc(100% * ${obj.bbox[1]} / var(--img-natural-height, 1000))`,
+                          width: `calc(100% * ${obj.bbox[2]} / var(--img-natural-width, 1000))`,
+                          height: `calc(100% * ${obj.bbox[3]} / var(--img-natural-height, 1000))`,
+                          border: `3px solid ${objColor}`,
+                          backgroundColor: showMasks ? `${objColor}40` : 'transparent',
+                          boxShadow: showMasks ? 'none' : `0 0 20px ${objColor}80`,
+                          borderRadius: '4px',
+                        }}
                       >
-                        {obj.class} {(obj.confidence * 100).toFixed(0)}%
+                        {showLabels && (
+                          <div
+                            className="absolute -top-7 left-0 px-2 py-1 rounded text-xs font-semibold text-white whitespace-nowrap"
+                            style={{ backgroundColor: objColor }}
+                          >
+                            {obj.class} {(obj.confidence * 100).toFixed(0)}%
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                ))}
-
-                {/* Detection Info Overlay */}
-                <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  <p className="text-[#00D4FF] text-sm font-semibold">YOLO Detection Active</p>
-                  <p className="text-white text-xs">{filteredObjects.length} objects detected</p>
+                    );
+                  })}
+                  
+                  {/* Simple image onload handler to set CSS variables for natural width/height */}
+                  <img 
+                    src={imageUrl} 
+                    className="hidden" 
+                    onLoad={(e) => {
+                      const img = e.currentTarget;
+                      const parent = img.parentElement;
+                      if (parent) {
+                        parent.style.setProperty('--img-natural-width', img.naturalWidth.toString());
+                        parent.style.setProperty('--img-natural-height', img.naturalHeight.toString());
+                      }
+                    }} 
+                  />
                 </div>
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black w-full h-full flex flex-col items-center justify-center">
+                  <p className="text-gray-400 mb-4">No image uploaded</p>
+                  <label className="btn-primary px-4 py-2 cursor-pointer">
+                    Upload Image
+                    <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                  </label>
+                </div>
+              )}
 
-                {/* FPS and VRAM Counter */}
+              {/* Detection Info Overlay */}
+              {imageUrl && (
+                <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
+                  <p className="text-[#00D4FF] text-sm font-semibold">Grounding DINO Active</p>
+                  <p className="text-white text-xs">{filteredObjects.length} objects detected</p>
+                  <button 
+                    onClick={handleDetect} 
+                    disabled={isDetecting}
+                    className="mt-2 btn-primary px-3 py-1 text-xs w-full"
+                  >
+                    {isDetecting ? "Detecting..." : "Run Detection"}
+                  </button>
+                  <div className="mt-2">
+                    <label className="text-xs text-gray-300 bg-[rgba(255,255,255,0.1)] px-2 py-1 rounded cursor-pointer block text-center mt-1">
+                      Change Image
+                      <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    </label>
+                  </div>
+                </div>
+              )}
+
+              {/* FPS and VRAM Counter */}
+              {latencyMs > 0 && (
                 <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
                   <div className="bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg text-right">
-                    <p className="text-[#39FF14] text-sm font-semibold">58 FPS</p>
-                    <p className="text-white text-xs">12ms latency</p>
+                    <p className="text-[#39FF14] text-sm font-semibold">{latencyMs > 0 ? (1000/latencyMs).toFixed(1) : 0} FPS</p>
+                    <p className="text-white text-xs">{latencyMs.toFixed(0)}ms latency</p>
                   </div>
                   <div className="bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-lg border border-[rgba(255,255,255,0.1)]">
-                    <p className="text-[#FFD60A] text-xs font-semibold">VRAM: 4.2GB / 8GB</p>
+                    <p className="text-[#FFD60A] text-xs font-semibold">CPU Mode</p>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* View Controls */}

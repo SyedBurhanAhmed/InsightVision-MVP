@@ -76,8 +76,11 @@ InsightVision/
 2.  **Backend Setup:**
     ```bash
     cd backend
+    python -m venv venv
+    # Windows: venv\Scripts\activate
+    # Linux/Mac: source venv/bin/activate
     pip install -r requirements.txt
-    python main.py
+    uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ```
 3.  **Frontend Setup:**
     ```bash
