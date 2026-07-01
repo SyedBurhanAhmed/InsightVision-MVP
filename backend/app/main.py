@@ -1,44 +1,87 @@
-from fastapi import FastAPI
+import sys
+import os
 import torch
 import logging
+import time
 from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+# Add GroundingDINO source to path
+_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO")
+if _DINO_ROOT not in sys.path:
+    sys.path.insert(0, _DINO_ROOT)
+
 from app.core.config import settings
-from groundingdino.util.inference import load_model
+from app.core.state import ml_models
 
 logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
-from app.core.state import ml_models
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Loading Grounding DINO model...")
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    if device == "cpu":
-        logger.warning("Running Grounding DINO on CPU — latency will be high, for integration testing only")
-        
+    ml_models["device"] = device
+    logger.info(f"Using device: {device}")
+
+    # ── 1. Load GroundingDINO ───────────────────────────────────────────────
+    logger.info("Loading GroundingDINO model...")
+    t0 = time.time()
     try:
+        from groundingdino.util.inference import load_model
         model = load_model(
-            settings.GROUNDING_DINO_CONFIG_PATH, 
+            settings.GROUNDING_DINO_CONFIG_PATH,
             settings.GROUNDING_DINO_WEIGHTS_PATH,
-            device=device
+            device=device,
         )
         ml_models["detector"] = model
-        logger.info("Grounding DINO loaded successfully.")
+        logger.info(f"GroundingDINO loaded in {(time.time()-t0)*1000:.0f} ms on {device}.")
     except Exception as e:
-        logger.error(f"Failed to load Grounding DINO: {e}")
+        logger.error(f"Failed to load GroundingDINO: {e}")
         ml_models["detector"] = None
+
+    # ── 2. Load Florence-2 ──────────────────────────────────────────────────
+    logger.info("Loading Florence-2-base model...")
+    t_flo = time.time()
+    try:
+        from transformers import AutoProcessor, AutoModelForCausalLM
+        # Load local or auto-download base model
+        processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base", trust_remote_code=True)
+        model_flo = AutoModelForCausalLM.from_pretrained(
+            "microsoft/Florence-2-base",
+            trust_remote_code=True,
+            attn_implementation="eager"
+        ).to(device)
         
+        ml_models["florence_model"] = model_flo
+        ml_models["florence_processor"] = processor
+        logger.info(f"Florence-2 loaded in {(time.time()-t_flo)*1000:.0f} ms on {device}.")
+    except Exception as e:
+        logger.error(f"Failed to load Florence-2: {e}")
+        ml_models["florence_model"] = None
+        ml_models["florence_processor"] = None
+
+    # ── 3. Load QueryParser (Groq) ──────────────────────────────────────────
+    try:
+        from app.services.query_parser import QueryParser
+        ml_models["query_parser"] = QueryParser()
+        logger.info("QueryParser (Groq/Llama3) ready.")
+    except Exception as e:
+        logger.error(f"Failed to init QueryParser: {e}")
+        ml_models["query_parser"] = None
+
     yield
-    
+
     ml_models.clear()
     logger.info("Models unloaded.")
 
-from app.routers import vision
 
-app = FastAPI(title="InsightVision API", version="0.1.0", lifespan=lifespan)
+# ── App factory ─────────────────────────────────────────────────────────────
+from app.routers import vision, query as query_router
 
-# CORS middleware for frontend integration
-from fastapi.middleware.cors import CORSMiddleware
+app = FastAPI(title="InsightVision API", version="0.3.0", lifespan=lifespan)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -48,21 +91,24 @@ app.add_middleware(
 )
 
 app.include_router(vision.router, prefix="/api")
+app.include_router(query_router.router, prefix="/api/vision")
 
-@app.get("/api/chat")
-def dummy_chat():
-    # Dummy endpoint to prevent 404 spam from browser extensions or old tabs polling for a chat API
-    return {"status": "ignored"}
 
 @app.get("/health")
 def health_check():
     has_gpu = torch.cuda.is_available()
     device_name = torch.cuda.get_device_name(0) if has_gpu else "cpu"
-    vram_gb = round(torch.cuda.get_device_properties(0).total_memory / (1024**3), 2) if has_gpu else 0.0
-
+    vram_gb = (
+        round(torch.cuda.get_device_properties(0).total_memory / (1024 ** 3), 2)
+        if has_gpu
+        else 0.0
+    )
     return {
         "status": "ok",
         "gpu": has_gpu,
         "device": device_name,
-        "vram_gb": vram_gb
+        "vram_gb": vram_gb,
+        "detector_loaded": ml_models.get("detector") is not None,
+        "florence_loaded": ml_models.get("florence_model") is not None,
+        "query_parser_loaded": ml_models.get("query_parser") is not None,
     }

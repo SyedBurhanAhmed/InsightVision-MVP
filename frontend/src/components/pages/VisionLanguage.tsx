@@ -118,31 +118,59 @@ const queryHistory = [
   },
 ];
 
+const BACKEND = 'http://localhost:8000';
+
 export default function VisionLanguage() {
   const [query, setQuery] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [currentResult, setCurrentResult] = useState<typeof queryHistory[0] | null>(null);
+  const [currentResult, setCurrentResult] = useState<any | null>(null);
   const [activeEngine, setActiveEngine] = useState('florence2');
   const [viewMode, setViewMode] = useState('annotated');
   const [isListening, setIsListening] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
 
-  const handleSubmit = (queryText: string) => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setImagePreviewUrl(URL.createObjectURL(file));
+      setCurrentResult(null);
+      setApiError(null);
+    }
+  };
+
+  const handleSubmit = async (queryText: string) => {
+    if (!selectedImage) {
+      setApiError('Please upload an image first using the camera icon below the query input.');
+      return;
+    }
     setIsProcessing(true);
+    setApiError(null);
     setQuery('');
-    setTimeout(() => {
-      setCurrentResult({
-        id: Date.now(),
-        query: queryText,
-        answer: "Processing complete. 3 objects match your query.",
-        timestamp: "Just now",
-        objects: [
-          { type: 'Person', id: 'P001', bbox: [150, 120, 80, 200] },
-          { type: 'Person', id: 'P002', bbox: [450, 140, 75, 190] },
-          { type: 'Vehicle', id: 'V001', bbox: [700, 280, 150, 100] },
-        ]
+
+    const formData = new FormData();
+    formData.append('image', selectedImage);
+    formData.append('query', queryText);
+
+    try {
+      const res = await fetch(`${BACKEND}/api/vision/query`, {
+        method: 'POST',
+        body: formData,
       });
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Backend error ${res.status}: ${errText}`);
+      }
+      const data = await res.json();
+      setCurrentResult(data);
+    } catch (err: any) {
+      console.error(err);
+      setApiError(err.message || 'Failed to reach backend. Is it running on port 8000?');
+    } finally {
       setIsProcessing(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -238,56 +266,76 @@ export default function VisionLanguage() {
 
           {/* Visual Result Area */}
           <div className="premium-card p-6">
-            <div className="aspect-video bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(0,255,255,0.3)]">
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black">
-                <div className="absolute inset-0 opacity-30">
-                  <div className="absolute bottom-0 left-0 right-0 h-1/2 bg-gradient-to-t from-gray-700 to-transparent"></div>
+            {/* Image Preview */}
+            <div className="aspect-video bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(0,255,255,0.3)] mb-2">
+              {imagePreviewUrl ? (
+                <img src={imagePreviewUrl} alt="Query image" className="w-full h-full object-contain" />
+              ) : (
+                <div className="absolute inset-0 bg-gradient-to-br from-gray-800 via-gray-900 to-black flex items-center justify-center">
+                  <p className="text-gray-500 text-sm">Upload an image to query</p>
                 </div>
-                {currentResult && currentResult.objects.map((obj, idx) => (
-                  <div
-                    key={idx}
-                    className="absolute animate-pulse"
-                    style={{
-                      left: `${obj.bbox[0]}px`,
-                      top: `${obj.bbox[1]}px`,
-                      width: `${obj.bbox[2]}px`,
-                      height: `${obj.bbox[3]}px`,
-                      border: '4px solid #00FFFF',
-                      boxShadow: '0 0 30px rgba(0,255,255,0.8)',
-                      borderRadius: '6px',
-                    }}
-                  >
-                    <div className="absolute -top-8 left-0 px-3 py-1 rounded-full text-xs font-bold text-black bg-[#00FFFF]">
-                      {obj.type} {obj.id}
-                    </div>
-                  </div>
-                ))}
-                <div className="absolute top-4 left-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
-                  <div className="flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-[#00FFFF]" />
-                    <p className="text-[#00FFFF] text-sm font-semibold">
-                      {isProcessing ? 'Processing Query...' : 'VLM Ready'}
-                    </p>
+              )}
+              {/* Bbox overlays using normalized coords scaled to container */}
+              {currentResult && currentResult.objects && currentResult.objects.map((obj: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="absolute"
+                  style={{
+                    left: `${(obj.normalized_bbox?.[0] ?? 0) * 100}%`,
+                    top: `${(obj.normalized_bbox?.[1] ?? 0) * 100}%`,
+                    width: `${((obj.normalized_bbox?.[2] ?? 0) - (obj.normalized_bbox?.[0] ?? 0)) * 100}%`,
+                    height: `${((obj.normalized_bbox?.[3] ?? 0) - (obj.normalized_bbox?.[1] ?? 0)) * 100}%`,
+                    border: `3px solid ${obj.color ?? '#00FFFF'}`,
+                    boxShadow: `0 0 20px ${obj.color ?? '#00FFFF'}80`,
+                    borderRadius: '4px',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <div className="absolute -top-6 left-0 px-2 py-0.5 rounded text-xs font-bold text-black" style={{ background: obj.color ?? '#00FFFF' }}>
+                    {obj.type} {Math.round((obj.confidence ?? 0) * 100)}%
                   </div>
                 </div>
-                {isProcessing && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="bg-black/80 backdrop-blur-sm rounded-2xl p-8 text-center">
-                      <div className="w-16 h-16 border-4 border-[#00FFFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-                      <p className="text-[#00FFFF] font-semibold">Analyzing scene...</p>
-                      <p className="text-gray-400 text-sm mt-1">Understanding your query</p>
-                    </div>
-                  </div>
-                )}
+              ))}
+              <div className="absolute top-3 left-3 bg-black/70 backdrop-blur-sm px-3 py-1.5 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-[#00FFFF]" />
+                  <p className="text-[#00FFFF] text-xs font-semibold">
+                    {isProcessing ? 'Querying backend...' : currentResult ? `Task: ${currentResult.task?.toUpperCase()}` : 'VLM Ready'}
+                  </p>
+                </div>
               </div>
+              {isProcessing && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                  <div className="bg-black/80 rounded-2xl p-8 text-center">
+                    <div className="w-16 h-16 border-4 border-[#00FFFF] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-[#00FFFF] font-semibold">Querying backend...</p>
+                    <p className="text-gray-400 text-sm mt-1">Parser → Detector → Composer</p>
+                  </div>
+                </div>
+              )}
             </div>
+            {/* Image upload button */}
+            <label className="flex items-center gap-2 text-xs text-gray-400 cursor-pointer hover:text-white transition-colors mb-1">
+              <Camera className="w-4 h-4" />
+              <span>{selectedImage ? `Image: ${selectedImage.name}` : 'Upload image to query'}</span>
+              <input type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+            </label>
+            {/* Error display */}
+            {apiError && (
+              <div className="mt-2 p-3 rounded-lg bg-[rgba(220,20,60,0.15)] border border-[#DC143C] text-[#DC143C] text-xs">
+                {apiError}
+              </div>
+            )}
             {currentResult && !isProcessing && (
-              <div className="mt-4 p-4 rounded-lg bg-[rgba(0,255,255,0.1)] border border-[#00FFFF]">
+              <div className="mt-3 p-4 rounded-lg bg-[rgba(0,255,255,0.1)] border border-[#00FFFF]">
                 <div className="flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-[#00FFFF] mt-0.5 flex-shrink-0" />
                   <div className="flex-1">
                     <p className="text-white font-semibold mb-1">{currentResult.answer}</p>
-                    <p className="text-sm text-gray-400">Query: "{currentResult.query}"</p>
+                    <p className="text-xs text-gray-400">Query: "{currentResult.query}"</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Objects: {currentResult.objects?.length ?? 0} · Total: {currentResult.total_ms?.toFixed(0)}ms (parser: {currentResult.parser_ms?.toFixed(0)}ms · infer: {currentResult.inference_ms?.toFixed(0)}ms)
+                    </p>
                   </div>
                 </div>
               </div>
