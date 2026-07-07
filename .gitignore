@@ -80,3 +80,4 @@ outputs/
 *.jpg
 *.pth
 *.log
+ollama.log

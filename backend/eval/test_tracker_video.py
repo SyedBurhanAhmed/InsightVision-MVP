@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.ERROR)
 
 def process_video():
     input_path = "images/long_output3.mp4"
-    output_path = "images/output/tracked_long_output3.mp4"
+    output_path = "images/output/checking_tracked_long_output3.mp4"
     max_frames = 500  # Process first 500 frames (~20 seconds) for quick verification
     detect_confidence = 0.4
     prompt = "person" # Generic prompt suitable for lab camera
