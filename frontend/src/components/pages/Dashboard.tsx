@@ -22,10 +22,10 @@ const recentActivity = [
 ];
 
 const stats = [
-  { label: 'VLM Latency', value: '120ms', icon: Timer, color: 'text-[#00D4FF]' },
-  { label: 'Objects Detected', value: '1,234', icon: Target, color: 'text-[#39FF14]' },
-  { label: 'Avg. FPS', value: '58', icon: Zap, color: 'text-[#FFD60A]' },
-  { label: 'Query Success', value: '94%', icon: MessageSquare, color: 'text-[#00FFFF]' },
+  { label: 'VLM Latency', value: '120ms', icon: Timer, color: 'text-[#22D3C8]' },
+  { label: 'Objects Detected', value: '1,234', icon: Target, color: 'text-[#22D3C8]' },
+  { label: 'Avg. FPS', value: '58', icon: Zap, color: 'text-[#22D3C8]' },
+  { label: 'Query Success', value: '94%', icon: MessageSquare, color: 'text-[#22D3C8]' },
 ];
 
 export default function Dashboard() {
@@ -38,8 +38,8 @@ export default function Dashboard() {
   
   const gpuUsage = 78; // static mock value
   const getGpuColor = (usage: number) => {
-    if (usage < 60) return 'from-[#39FF14] to-[#00D4FF]';
-    if (usage <= 85) return 'from-[#FFD60A] to-[#FF6B35]';
+    if (usage < 60) return 'from-[#22D3C8] to-[#00A398]';
+    if (usage <= 85) return 'from-[#D1A153] to-[#A07020]';
     return 'from-[#FF0040] to-[#DC143C]';
   };
 
@@ -74,13 +74,13 @@ export default function Dashboard() {
         <div className="flex items-center gap-4 mb-3">
           {/* Active Engine Dropdown */}
           <div className="flex items-center gap-2 flex-1">
-            <Cpu className="w-4 h-4 text-[#00D4FF] shrink-0" />
+            <Cpu className="w-4 h-4 text-gray-400 shrink-0" />
             <span className="text-xs text-gray-500 uppercase shrink-0" style={{ letterSpacing: '0.08em' }}>Active Engine</span>
             <div className="relative flex-1 max-w-[220px]">
               <select
                 value={activeEngine}
                 onChange={(e) => setActiveEngine(e.target.value)}
-                className="w-full appearance-none rounded-lg px-4 py-2 pr-9 text-white text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#00D4FF]/50"
+                className="w-full appearance-none rounded-lg px-4 py-2 pr-9 text-white text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#22D3C8]/50"
                 style={{ backgroundColor: '#1a1a1a', border: '1px solid #2e2e2e' }}
               >
                 {engineOptions.map(opt => (
@@ -96,13 +96,13 @@ export default function Dashboard() {
 
           {/* View Mode Dropdown */}
           <div className="flex items-center gap-2 flex-1">
-            <Layers className="w-4 h-4 text-[#9D4EDD] shrink-0" />
+            <Layers className="w-4 h-4 text-gray-400 shrink-0" />
             <span className="text-xs text-gray-500 uppercase shrink-0" style={{ letterSpacing: '0.08em' }}>View Mode</span>
             <div className="relative flex-1 max-w-[220px]">
               <select
                 value={viewMode}
                 onChange={(e) => setViewMode(e.target.value)}
-                className="w-full appearance-none rounded-lg px-4 py-2 pr-9 text-white text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#9D4EDD]/50"
+                className="w-full appearance-none rounded-lg px-4 py-2 pr-9 text-white text-sm cursor-pointer focus:outline-none focus:ring-1 focus:ring-[#22D3C8]/50"
                 style={{ backgroundColor: '#1a1a1a', border: '1px solid #2e2e2e' }}
               >
                 {viewModeOptions.map(opt => (
@@ -118,7 +118,7 @@ export default function Dashboard() {
 
           {/* Live indicator */}
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg" style={{ backgroundColor: '#1a1a1a', border: '1px solid #2e2e2e' }}>
-            <span className="w-2 h-2 rounded-full bg-[#FF0040] animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-[#D1A153]" />
             <span className="text-xs text-gray-400">STANDBY</span>
           </div>
         </div>
@@ -131,11 +131,11 @@ export default function Dashboard() {
           >
             <div className="flex items-center justify-center w-20 h-20 rounded-full relative" style={{ backgroundColor: 'rgba(255,255,255,0.04)', border: '1px solid #2e2e2e' }}>
               <VideoOff className="w-9 h-9 text-[#444]" strokeWidth={1.5} />
-              <div className="absolute top-2 right-2 w-3 h-3 bg-[#DC143C] rounded-full animate-pulse shadow-[0_0_10px_#DC143C]"></div>
+              <div className="absolute top-2 right-2 w-3 h-3 bg-gray-500 rounded-full shadow-[0_0_8px_rgba(255,255,255,0.15)]"></div>
             </div>
             <div className="text-center">
-              <p className="text-[#DC143C] mb-1 font-semibold tracking-widest flex items-center justify-center gap-2 text-sm">
-                <span className="w-2 h-2 rounded-full bg-[#DC143C] animate-pulse"></span>
+              <p className="text-gray-400 mb-1 font-semibold tracking-widest flex items-center justify-center gap-2 text-sm">
+                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
                 BACKGROUND SERVER ACTIVE
               </p>
               <p className="text-[#555] text-sm">Waiting for live camera feed signal...</p>
@@ -160,21 +160,21 @@ export default function Dashboard() {
           <button
             onClick={() => setQuery('')}
             className="flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 hover:scale-105 shrink-0"
-            style={{ background: 'linear-gradient(135deg, #DC143C, #8B0000)' }}
+            style={{ background: 'linear-gradient(135deg, #22D3C8, #00A398)' }}
             aria-label="Send query"
           >
-            <SendHorizonal className="w-4 h-4 text-white" strokeWidth={2} />
+            <SendHorizonal className="w-4 h-4 text-black" strokeWidth={2} />
           </button>
         </div>
 
       </div>
 
       {/* Recent Activity & System Status */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recent Activity */}
         <div className="premium-card p-6">
           <div className="flex items-center gap-2 mb-6">
-            <Clock className="w-5 h-5 text-[#06D6A0]" />
+            <Clock className="w-5 h-5 text-[#22D3C8]" />
             <h3 className="text-xl font-semibold text-white">Recent Activity</h3>
           </div>
           <div className="space-y-4">
@@ -185,23 +185,23 @@ export default function Dashboard() {
                 title={activity.type === 'query' ? 'Click to replay' : ''}
               >
                 <div>
-                  <p className={`text-white flex items-center gap-2 ${activity.type === 'query' ? 'group-hover:text-[#00D4FF] transition-colors' : ''}`}>
+                  <p className={`text-white flex items-center gap-2 ${activity.type === 'query' ? 'group-hover:text-[#22D3C8] transition-colors' : ''}`}>
                     {activity.action}
                     {activity.type === 'query' && (
-                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] bg-[#00D4FF]/20 text-[#00D4FF] px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                      <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] bg-[#22D3C8]/20 text-[#22D3C8] px-2 py-0.5 rounded uppercase font-bold tracking-wider">
                         Replay
                       </span>
                     )}
                   </p>
                   <p className="text-sm text-gray-500">{activity.time}</p>
                 </div>
-                <div className="w-2 h-2 rounded-full bg-[#DC143C]"></div>
+                <div className="w-2 h-2 rounded-full bg-gray-500"></div>
               </div>
             ))}
           </div>
           <Link
             to="/history"
-            className="block mt-4 text-center text-sm text-[#DC143C] hover:text-[#FF0040] transition-colors"
+            className="block mt-4 text-center text-sm text-[#22D3C8] hover:underline transition-colors"
           >
             View All History →
           </Link>
@@ -210,32 +210,32 @@ export default function Dashboard() {
         {/* System Status */}
         <div className="premium-card p-6">
           <div className="flex items-center gap-2 mb-6">
-            <Activity className="w-5 h-5 text-[#39FF14]" />
+            <Activity className="w-5 h-5 text-[#22D3C8]" />
             <h3 className="text-xl font-semibold text-white">System Status</h3>
           </div>
           <div className="space-y-4">
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-400">YOLO Model</span>
-                <span className="text-[#39FF14]">Active</span>
+                <span className="text-[#22D3C8]">Active</span>
               </div>
               <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                <div className="bg-gradient-to-r from-[#39FF14] to-[#00D4FF] h-2 rounded-full" style={{ width: '100%' }}></div>
+                <div className="bg-[#22D3C8] h-2 rounded-full" style={{ width: '100%' }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-400">VLM Engine</span>
-                <span className="text-[#00FFFF]">Ready</span>
+                <span className="text-[#22D3C8]">Ready</span>
               </div>
               <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                <div className="bg-gradient-to-r from-[#00FFFF] to-[#9D4EDD] h-2 rounded-full" style={{ width: '95%' }}></div>
+                <div className="bg-[#22D3C8]/80 h-2 rounded-full" style={{ width: '95%' }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-400">GPU Memory</span>
-                <span className={gpuUsage < 60 ? 'text-[#39FF14]' : gpuUsage <= 85 ? 'text-[#FFD60A]' : 'text-[#FF0040]'}>
+                <span className={gpuUsage < 60 ? 'text-[#22D3C8]' : gpuUsage <= 85 ? 'text-[#D1A153]' : 'text-[#FF0040]'}>
                   6.2 / 8 GB ({gpuUsage}%)
                 </span>
               </div>
@@ -246,10 +246,10 @@ export default function Dashboard() {
             <div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-400">Camera Feed</span>
-                <span className="text-[#FF0040]">Standby</span>
+                <span className="text-gray-500">Standby</span>
               </div>
               <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-2">
-                <div className="bg-gradient-to-r from-[#FF0040] to-[#DC143C] h-2 rounded-full" style={{ width: '0%' }}></div>
+                <div className="bg-gray-700 h-2 rounded-full" style={{ width: '0%' }}></div>
               </div>
             </div>
           </div>

@@ -1,27 +1,17 @@
 from abc import ABC, abstractmethod
+import numpy as np
 
 class TrackerBase(ABC):
-    """
-    Base class for multi-object tracking algorithms (e.g., ByteTrack, DeepSORT).
-    """
-
     @abstractmethod
-    def update(self, detections: dict, frame_id: int) -> dict:
+    def update(self, dets: np.ndarray, img: np.ndarray) -> np.ndarray:
         """
-        Updates internal tracker state with new detections and returns tracked objects.
-
+        Update tracker state with new bounding box detections.
+        
         Args:
-            detections (dict): The output dictionary from the detector, containing:
-                               'boxes', 'scores', 'labels'.
-            frame_id (int): The current frame number in the sequence.
-
+            dets: numpy array of shape (N, 6) -> [[x1, y1, x2, y2, score, class_id], ...]
+            img: BGR image numpy array of shape (H, W, 3)
+            
         Returns:
-            dict: A dictionary containing tracking results:
-                - tracks (list[dict]): A list of tracked objects, where each dict has:
-                    - track_id (int): Unique identifier for the tracked object.
-                    - box (list[float]): Bounding box [x1, y1, x2, y2].
-                    - score (float): Confidence score.
-                    - label (str): Object class or description.
-                - inference_ms (float): Inference time in milliseconds.
+            numpy array of shape (M, 7) -> [[x1, y1, x2, y2, track_id, score, class_id], ...]
         """
         pass

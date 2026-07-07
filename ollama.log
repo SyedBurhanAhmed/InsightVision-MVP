@@ -1,0 +1,36 @@
+time=2026-07-03T20:02:43.368+05:00 level=INFO source=routes.go:1961 msg="server config" env="map[CUDA_VISIBLE_DEVICES: GGML_VK_VISIBLE_DEVICES: GPU_DEVICE_ORDINAL: HIP_VISIBLE_DEVICES: HSA_OVERRIDE_GFX_VERSION: HTTPS_PROXY: HTTP_PROXY: LLAMA_ARG_FIT: LLAMA_ARG_FIT_TARGET: NO_PROXY: OLLAMA_CONTEXT_LENGTH:0 OLLAMA_DEBUG:INFO OLLAMA_DEBUG_LOG_REQUESTS:false OLLAMA_EDITOR: OLLAMA_FLASH_ATTENTION:false OLLAMA_GO_TEMPLATE:true OLLAMA_GPU_OVERHEAD:0 OLLAMA_HOST:http://127.0.0.1:11434 OLLAMA_IGPU_ENABLE: OLLAMA_KEEP_ALIVE:5m0s OLLAMA_KV_CACHE_TYPE: OLLAMA_LLM_LIBRARY: OLLAMA_LOAD_TIMEOUT:5m0s OLLAMA_MAX_LOADED_MODELS:0 OLLAMA_MAX_QUEUE:512 OLLAMA_MAX_TRANSFER_STREAMS:4 OLLAMA_MODELS:/home/burhan/.ollama/models OLLAMA_NOHISTORY:false OLLAMA_NOPRUNE:false OLLAMA_NO_CLOUD:false OLLAMA_NUM_PARALLEL:1 OLLAMA_ORIGINS:[http://localhost https://localhost http://localhost:* https://localhost:* http://127.0.0.1 https://127.0.0.1 http://127.0.0.1:* https://127.0.0.1:* http://0.0.0.0 https://0.0.0.0 http://0.0.0.0:* https://0.0.0.0:* app://* file://* tauri://* vscode-webview://* vscode-file://*] OLLAMA_REMOTES:[ollama.com] OLLAMA_SCHED_SPREAD:false OLLAMA_VULKAN:true ROCR_VISIBLE_DEVICES: http_proxy: https_proxy: no_proxy:]"
+time=2026-07-03T20:02:43.369+05:00 level=INFO source=routes.go:1963 msg="Ollama cloud disabled: false"
+time=2026-07-03T20:02:43.370+05:00 level=INFO source=images.go:883 msg="total blobs: 5"
+time=2026-07-03T20:02:43.371+05:00 level=INFO source=images.go:890 msg="total unused blobs removed: 0"
+time=2026-07-03T20:02:43.371+05:00 level=INFO source=routes.go:2023 msg="Listening on 127.0.0.1:11434 (version 0.31.1)"
+time=2026-07-03T20:02:43.372+05:00 level=INFO source=runner.go:60 msg="discovering available GPUs..."
+time=2026-07-03T20:02:43.374+05:00 level=INFO source=model_list_cache.go:111 msg="model list cache hydration complete" models=1 failures=0 elapsed=2.692337ms
+time=2026-07-03T20:02:43.954+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h41m27.533931946s consecutive_failures=0
+time=2026-07-03T20:02:45.681+05:00 level=INFO source=types.go:32 msg="inference compute" id=0 filter_id=0 library=CUDA compute=12.0 name=CUDA0 description="NVIDIA GeForce RTX 5070 Ti" libdirs=ollama,cuda_v13 driver=13.2 pci_id=0000:01:00.0 type=discrete total="15.9 GiB" available="14.7 GiB"
+time=2026-07-03T20:02:45.681+05:00 level=INFO source=routes.go:2073 msg="vram-based default context" total_vram="15.9 GiB" default_num_ctx=4096
+[GIN] 2026/07/03 - 20:02:50 | 200 |    1.061612ms |       127.0.0.1 | HEAD     "/"
+[GIN] 2026/07/03 - 20:02:50 | 200 |     118.584µs |       127.0.0.1 | GET      "/api/tags"
+time=2026-07-03T23:44:12.187+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h57m45.358687372s consecutive_failures=0
+time=2026-07-04T03:41:58.148+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h21m16.264577374s consecutive_failures=0
+time=2026-07-04T08:03:15.406+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h25m19.588384197s consecutive_failures=0
+time=2026-07-04T12:28:35.666+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h27m37.407805007s consecutive_failures=0
+time=2026-07-04T16:56:13.618+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h22m39.898702383s consecutive_failures=0
+time=2026-07-04T21:18:54.164+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h19m32.137511448s consecutive_failures=0
+time=2026-07-05T00:38:26.874+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h29m39.350350719s consecutive_failures=0
+time=2026-07-05T04:08:06.799+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h34m28.681335031s consecutive_failures=0
+time=2026-07-05T07:42:36.178+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h32m18.766650017s consecutive_failures=0
+time=2026-07-05T12:14:55.520+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h46m16.065135748s consecutive_failures=0
+time=2026-07-05T17:01:12.599+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h27m59.479669436s consecutive_failures=0
+time=2026-07-05T21:29:12.837+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h19m42.876251139s consecutive_failures=0
+time=2026-07-06T00:48:56.500+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h40m38.830966105s consecutive_failures=0
+time=2026-07-06T05:29:36.245+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h38m43.316815341s consecutive_failures=0
+time=2026-07-06T09:08:20.472+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h46m28.233000433s consecutive_failures=0
+time=2026-07-06T12:54:49.534+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h35m36.626386531s consecutive_failures=0
+time=2026-07-06T17:30:27.025+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h43m48.589873996s consecutive_failures=0
+time=2026-07-06T21:14:16.371+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h25m12.223787216s consecutive_failures=0
+time=2026-07-07T01:39:29.297+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h14m0.018810314s consecutive_failures=0
+time=2026-07-07T04:53:29.831+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h43m2.107399972s consecutive_failures=0
+time=2026-07-07T09:36:32.521+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h27m26.966447718s consecutive_failures=0
+time=2026-07-07T14:04:00.075+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h13m15.109725651s consecutive_failures=0
+time=2026-07-07T18:17:15.834+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=3h51m32.028598714s consecutive_failures=0
+time=2026-07-07T22:08:48.902+05:00 level=INFO source=model_recommendations.go:177 msg="model recommendations cache sleep scheduled" wait=4h15m49.264768311s consecutive_failures=0

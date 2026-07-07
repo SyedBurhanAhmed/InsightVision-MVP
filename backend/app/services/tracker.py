@@ -1,48 +1,63 @@
-import time
 import logging
-from app.services.tracker_base import TrackerBase
-import supervision as sv
+from typing import Literal, Any
+import numpy as np
+from boxmot.trackers.bbox.botsort.botsort import BotSort
+from boxmot.trackers.bbox.bytetrack.bytetrack import ByteTrack
+
+from .tracker_base import TrackerBase
 
 logger = logging.getLogger(__name__)
 
-class ByteTrackerService(TrackerBase):
-    def __init__(self):
-        self.tracker = sv.ByteTrack()
+class ConcreteTracker(TrackerBase):
+    def __init__(
+        self,
+        method: Literal["botsort", "bytetrack"] = "botsort",
+        frame_rate: int = 30,
+        **kwargs: Any
+    ):
+        """
+        Initializes concrete tracker using boxmot BotSort or ByteTrack.
+        ReID is disabled by default to save VRAM and computing resources.
+        """
+        self.method = method
+        self.frame_rate = frame_rate
+        
+        logger.info(f"Initializing ConcreteTracker: method={method}, frame_rate={frame_rate}")
+        
+        if method == "botsort":
+            # Force with_reid=False to prevent downloading heavy ReID models
+            self.tracker = BotSort(
+                with_reid=False,
+                frame_rate=frame_rate,
+                **kwargs
+            )
+        else:
+            self.tracker = ByteTrack(
+                frame_rate=frame_rate,
+                **kwargs
+            )
 
-    def update(self, detections: dict, frame_id: int) -> dict:
-        start_time = time.time()
+    def update(self, dets: np.ndarray, img: np.ndarray) -> np.ndarray:
+        """
+        Updates the tracker with frame detections.
         
-        # Convert detection dict to supervision Detections object
-        import numpy as np
-        
-        boxes = np.array(detections.get("boxes", []))
-        confidence = np.array(detections.get("scores", []))
-        class_id = np.zeros(len(boxes), dtype=int) # dummy class id since tracking usually relies on boxes
-        
-        if len(boxes) == 0:
-            return {
-                "tracks": [],
-                "inference_ms": (time.time() - start_time) * 1000
-            }
-
-        sv_detections = sv.Detections(
-            xyxy=boxes,
-            confidence=confidence,
-            class_id=class_id
-        )
-        
-        tracked_detections = self.tracker.update_with_detections(sv_detections)
-        
-        tracks = []
-        for i, (xyxy, mask, conf, cid, tracker_id, data) in enumerate(tracked_detections):
-            tracks.append({
-                "track_id": tracker_id,
-                "box": xyxy.tolist(),
-                "score": float(conf) if conf is not None else 1.0,
-                "label": "tracked_object"
-            })
+        Args:
+            dets: numpy array of shape (N, 6) -> [x1, y1, x2, y2, score, class_id]
+            img: BGR numpy image frame
             
-        return {
-            "tracks": tracks,
-            "inference_ms": (time.time() - start_time) * 1000
-        }
+        Returns:
+            numpy array of shape (M, 7) -> [x1, y1, x2, y2, track_id, score, class_id]
+        """
+        if dets.shape[0] == 0:
+            # Maintain tracker updates even without active detections
+            empty_dets = np.empty((0, 6), dtype=np.float32)
+            res = self.tracker.update(empty_dets, img)
+        else:
+            res = self.tracker.update(dets, img)
+            
+        if len(res) == 0:
+            return np.empty((0, 7), dtype=np.float32)
+            
+        arr = np.array(res, dtype=np.float32)
+        # Slice to return standard x1, y1, x2, y2, track_id, score, class_id
+        return arr[:, :7]

@@ -38,6 +38,7 @@ async def detect_objects(
     prompt: str = Form(...),
     conf_threshold: float = Form(0.35),
     model: str = Form("groundingdino"),  # "groundingdino" or "florence2"
+    masks: bool = Form(False),
 ):
     t_start = time.time()
     device = ml_models.get("device", "cpu")
@@ -54,61 +55,125 @@ async def detect_objects(
     inference_ms = 0.0
     objects = []
 
-    # ── ROUTE 1: Florence-2 VLM Grounding ────────────────────────────────────
-    if model == "florence2":
-        flo_model = ml_models.get("florence_model")
-        flo_proc = ml_models.get("florence_processor")
-        if not flo_model or not flo_proc:
-            raise HTTPException(status_code=503, detail="Florence-2 model is not loaded in backend.")
-
+    # ── ROUTE 0.5: Gemma 4 Multimodal Grounding & OCR ───────────────────────
+    if model == "gemma4":
         t0 = time.time()
         try:
-            # Convert to PIL Image for transformers processor
+            from app.services.gemma4 import Gemma4Service
+            gemma_svc = Gemma4Service()
             image_pil = Image.fromarray(img_rgb).convert("RGB")
-            task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
-            text_input = task_prompt + prompt
-
-            inputs = flo_proc(text=text_input, images=image_pil, return_tensors="pt").to(device)
-
-            with torch.no_grad():
-                generated_ids = flo_model.generate(
-                    input_ids=inputs["input_ids"],
-                    pixel_values=inputs["pixel_values"],
-                    max_new_tokens=1024,
-                    early_stopping=False,
-                    do_sample=False,
-                    num_beams=3,
-                )
-
-            generated_text = flo_proc.batch_decode(generated_ids, skip_special_tokens=False)[0]
-            parsed_answer = flo_proc.post_process_generation(
-                generated_text,
-                task=task_prompt,
-                image_size=(image_pil.width, image_pil.height)
-            )
-
-            grounding_data = parsed_answer.get(task_prompt, {})
-            raw_boxes = grounding_data.get("bboxes", [])
-            raw_labels = grounding_data.get("labels", [])
-
+            
+            gemma_res = gemma_svc.process(image_pil, prompt)
             inference_ms = (time.time() - t0) * 1000
-
-            for i, (box, label) in enumerate(zip(raw_boxes, raw_labels)):
-                x1, y1, x2, y2 = box
-                color = _COLORS[i % len(_COLORS)]
+            
+            import uuid
+            if gemma_res["type"] == "ocr":
+                text_out = gemma_res["text"]
                 obj = DetectedObject.from_xyxy(
-                    obj_id=f"{label[:1].upper()}{i+1:03d}",
-                    label=label,
-                    score=0.95,  # Florence-2 outputs labels directly, default high score
-                    x1=float(x1), y1=float(y1), x2=float(x2), y2=float(y2),
+                    obj_id=str(uuid.uuid4())[:8],
+                    label=text_out,
+                    score=1.0,
+                    x1=0.0, y1=0.0, x2=float(img_w), y2=float(img_h),
                     img_w=img_w, img_h=img_h,
-                    color=color,
+                    color="#22D3C8"
                 )
                 objects.append(obj)
-
+            else:
+                for i, box in enumerate(gemma_res["boxes"]):
+                    x1, y1, x2, y2 = box
+                    obj = DetectedObject.from_xyxy(
+                        obj_id=str(uuid.uuid4())[:8],
+                        label=prompt,
+                        score=0.85,
+                        x1=float(x1), y1=float(y1), x2=float(x2), y2=float(y2),
+                        img_w=img_w, img_h=img_h,
+                        color=_COLORS[i % len(_COLORS)]
+                    )
+                    objects.append(obj)
         except Exception as e:
-            logger.error(f"Florence-2 error: {e}")
-            raise HTTPException(status_code=500, detail=f"Florence-2 error: {e}")
+            logger.error(f"Gemma 4 processing failed: {e}")
+            raise HTTPException(status_code=500, detail=f"Gemma 4 execution error: {str(e)}")
+
+    # ── ROUTE 1: Florence-2 VLM Grounding (Commented out in favor of Gemma 4) ──
+    # elif model == "florence2":
+    #     flo_model = ml_models.get("florence_model")
+    #     flo_proc = ml_models.get("florence_processor")
+    #     if not flo_model or not flo_proc:
+    #         raise HTTPException(status_code=503, detail="Florence-2 model is not loaded in backend.")
+    # 
+    #     t0 = time.time()
+    #     try:
+    #         # Convert to PIL Image for transformers processor
+    #         image_pil = Image.fromarray(img_rgb).convert("RGB")
+    #         
+    #         # Determine Florence-2 task based on query text or masks toggle
+    #         prompt_lower = prompt.lower()
+    #         if masks or any(k in prompt_lower for k in ["segment", "mask", "outline"]):
+    #             task_prompt = "<REFERRING_EXPRESSION_SEGMENTATION>"
+    #             text_input = task_prompt + prompt
+    #         elif any(k in prompt_lower for k in ["read", "ocr", "text", "plate", "license"]):
+    #             task_prompt = "<OCR_WITH_REGION>"
+    #             text_input = task_prompt
+    #         else:
+    #             task_prompt = "<CAPTION_TO_PHRASE_GROUNDING>"
+    #             text_input = task_prompt + prompt
+    # 
+    #         inputs = flo_proc(text=text_input, images=image_pil, return_tensors="pt").to(device)
+    # 
+    #         with torch.no_grad():
+    #             generated_ids = flo_model.generate(
+    #                 input_ids=inputs["input_ids"],
+    #                 pixel_values=inputs["pixel_values"],
+    #                 max_new_tokens=1024,
+    #                 early_stopping=False,
+    #                 do_sample=False,
+    #                 num_beams=3,
+    #             )
+    # 
+    #         generated_text = flo_proc.batch_decode(generated_ids, skip_special_tokens=False)[0]
+    #         parsed_answer = flo_proc.post_process_generation(
+    #             generated_text,
+    #             task=task_prompt,
+    #             image_size=(image_pil.width, image_pil.height)
+    #         )
+    # 
+    #         raw_data = parsed_answer.get(task_prompt, {})
+    #         
+    #         # Extract boxes and labels based on Florence-2 task output formats
+    #         raw_boxes = []
+    #         raw_labels = []
+    #         
+    #         if task_prompt == "<OCR_WITH_REGION>":
+    #             # Returns labels (text transcriptions) and quadboxes
+    #             quadboxes = raw_data.get("quadboxes", [])
+    #             raw_labels = raw_data.get("labels", [])
+    #             # Convert quadboxes to standard bounding boxes
+    #             for qb in quadboxes:
+    #                 xs = qb[0::2]
+    #                 ys = qb[1::2]
+    #                 raw_boxes.append([min(xs), min(ys), max(xs), max(ys)])
+    #         else:
+    #             raw_boxes = raw_data.get("bboxes", [])
+    #             raw_labels = raw_data.get("labels", [])
+    # 
+    #         inference_ms = (time.time() - t0) * 1000
+    # 
+    #         for i, (box, label) in enumerate(zip(raw_boxes, raw_labels)):
+    #             x1, y1, x2, y2 = box
+    #             color = _COLORS[i % len(_COLORS)]
+    #             obj = DetectedObject.from_xyxy(
+    #                 obj_id=f"{label[:1].upper()}{i+1:03d}",
+    #                 label=label,
+    #                 score=0.95,  # Florence-2 outputs labels directly, default high score
+    #                 x1=float(x1), y1=float(y1), x2=float(x2), y2=float(y2),
+    #                 img_w=img_w, img_h=img_h,
+    #                 color=color,
+    #             )
+    #             objects.append(obj)
+    # 
+    #     except Exception as e:
+    #         logger.error(f"Florence-2 error: {e}")
+    #         raise HTTPException(status_code=500, detail=f"Florence-2 error: {e}")
 
     # ── ROUTE 2: GroundingDINO Grounding ─────────────────────────────────────
     else:

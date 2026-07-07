@@ -41,7 +41,7 @@ export default function LiveCamera() {
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <Video className="w-8 h-8 text-[#FF0040]" strokeWidth={2} />
+          <Video className="w-8 h-8 text-[#22D3C8]" strokeWidth={2} />
           <h1 className="text-4xl font-bold text-white">Live Camera Feed</h1>
         </div>
         <p className="text-gray-400">Real-time video stream with AI detection</p>
@@ -52,29 +52,29 @@ export default function LiveCamera() {
         <div className="lg:col-span-2 space-y-6">
           {/* Camera View */}
           <div className="premium-card p-6">
-            <div className="aspect-video bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(220,20,60,0.3)]">
+            <div className="aspect-video bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(34,211,200,0.3)]">
               {isStreaming ? (
                 <div className="w-full h-full flex items-center justify-center relative">
                   {/* Simulated Camera Feed */}
                   <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black"></div>
                   <div className="relative z-10 text-center">
                     <div className="animate-pulse">
-                      <Camera className="w-16 h-16 text-[#FF0040] mx-auto mb-4" />
+                      <Camera className="w-16 h-16 text-[#22D3C8] mx-auto mb-4" />
                       <p className="text-white">Camera Stream Active</p>
                       <p className="text-sm text-gray-400 mt-2">FPS: {fps}</p>
                     </div>
                   </div>
                   
                   {/* Live Indicator */}
-                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#FF0040] px-3 py-1 rounded-full">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    <span className="text-white text-sm font-semibold">LIVE</span>
+                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#22D3C8] px-3 py-1 rounded-full text-black">
+                    <div className="w-2 h-2 bg-black rounded-full animate-pulse"></div>
+                    <span className="text-black text-sm font-semibold">LIVE</span>
                   </div>
 
                   {/* Stats Overlay */}
                   <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
                     <p className="text-white text-sm">{resolution}</p>
-                    <p className="text-[#39FF14] text-xs">{fps} FPS</p>
+                    <p className="text-[#22D3C8] text-xs">{fps} FPS</p>
                   </div>
                 </div>
               ) : (
@@ -93,7 +93,7 @@ export default function LiveCamera() {
               <button
                 onClick={handleStartStop}
                 className={`btn-primary px-8 py-3 flex items-center gap-2 transition-all duration-300 ${
-                  isStreaming ? 'bg-gradient-to-r from-red-600 to-red-800' : 'hover:shadow-[0_0_15px_rgba(220,20,60,0.6)] hover:scale-[1.02]'
+                  isStreaming ? 'bg-gradient-to-r from-cyan-600 to-blue-800' : 'hover:shadow-[0_0_15px_rgba(34,211,200,0.6)] hover:scale-[1.02]'
                 }`}
               >
                 {isStreaming ? (
@@ -126,18 +126,18 @@ export default function LiveCamera() {
           {/* Upload Video Option */}
           <div className="premium-card p-6">
             <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-[#00D4FF]" />
+              <Upload className="w-5 h-5 text-[#22D3C8]" />
               Or Upload Video File
             </h3>
             <div 
               onClick={handleFileUpload}
-              className={`border-2 border-dashed ${uploadProgress > 0 ? 'border-[#00D4FF] bg-[rgba(0,212,255,0.02)]' : 'border-[rgba(220,20,60,0.3)] hover:border-[#DC143C]'} rounded-lg p-8 text-center transition-all cursor-pointer relative overflow-hidden`}
+              className={`border-2 border-dashed ${uploadProgress > 0 ? 'border-[#22D3C8] bg-[rgba(34,211,200,0.02)]' : 'border-[rgba(34,211,200,0.3)] hover:border-[#22D3C8]'} rounded-lg p-8 text-center transition-all cursor-pointer relative overflow-hidden`}
             >
               {uploadProgress > 0 ? (
                 <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
-                  <p className="text-[#00D4FF] font-semibold mb-3">Uploading Video... {Math.min(uploadProgress, 100)}%</p>
+                  <p className="text-[#22D3C8] font-semibold mb-3">Uploading Video... {Math.min(uploadProgress, 100)}%</p>
                   <div className="w-full max-w-[200px] bg-black rounded-full h-1.5 border border-[#333] overflow-hidden">
-                     <div className="bg-[#00D4FF] h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(uploadProgress, 100)}%` }}></div>
+                     <div className="bg-[#22D3C8] h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(uploadProgress, 100)}%` }}></div>
                   </div>
                 </div>
               ) : (

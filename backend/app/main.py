@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 
+from app.core.patch_transformers import patch_transformers
+patch_transformers()
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -41,26 +44,28 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to load GroundingDINO: {e}")
         ml_models["detector"] = None
 
-    # ── 2. Load Florence-2 ──────────────────────────────────────────────────
-    logger.info("Loading Florence-2-base model...")
-    t_flo = time.time()
-    try:
-        from transformers import AutoProcessor, AutoModelForCausalLM
-        # Load local or auto-download base model
-        processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base", trust_remote_code=True)
-        model_flo = AutoModelForCausalLM.from_pretrained(
-            "microsoft/Florence-2-base",
-            trust_remote_code=True,
-            attn_implementation="eager"
-        ).to(device)
-        
-        ml_models["florence_model"] = model_flo
-        ml_models["florence_processor"] = processor
-        logger.info(f"Florence-2 loaded in {(time.time()-t_flo)*1000:.0f} ms on {device}.")
-    except Exception as e:
-        logger.error(f"Failed to load Florence-2: {e}")
-        ml_models["florence_model"] = None
-        ml_models["florence_processor"] = None
+    # ── 2. Load Florence-2 (Commented Out for Gemma 4 Pivot) ────────────────
+    # logger.info("Loading Florence-2-base model...")
+    # t_flo = time.time()
+    # try:
+    #     from transformers import AutoProcessor, AutoModelForCausalLM
+    #     # Load local or auto-download base model
+    #     processor = AutoProcessor.from_pretrained("microsoft/Florence-2-base", trust_remote_code=True)
+    #     model_flo = AutoModelForCausalLM.from_pretrained(
+    #         "microsoft/Florence-2-base",
+    #         trust_remote_code=True,
+    #         attn_implementation="eager"
+    #     ).to(device)
+    #     
+    #     ml_models["florence_model"] = model_flo
+    #     ml_models["florence_processor"] = processor
+    #     logger.info(f"Florence-2 loaded in {(time.time()-t_flo)*1000:.0f} ms on {device}.")
+    # except Exception as e:
+    #     logger.error(f"Failed to load Florence-2: {e}")
+    #     ml_models["florence_model"] = None
+    #     ml_models["florence_processor"] = None
+    ml_models["florence_model"] = None
+    ml_models["florence_processor"] = None
 
     # ── 3. Load QueryParser (Groq) ──────────────────────────────────────────
     try:

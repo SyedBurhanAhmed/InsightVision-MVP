@@ -131,6 +131,7 @@ export default function ObjectDetection() {
     formData.append("prompt", activePrompts);
     formData.append("conf_threshold", confidenceThreshold.toString());
     formData.append("model", selectedModel);
+    formData.append("masks", showMasks.toString());
 
     try {
       // Assuming backend is running on localhost:8080
@@ -397,7 +398,7 @@ export default function ObjectDetection() {
                 <select 
                   value={selectedModel}
                   onChange={(e) => setSelectedModel(e.target.value)}
-                  className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#DC143C] cursor-pointer"
+                  className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(34,211,200,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#22D3C8] cursor-pointer"
                 >
                   <option className="bg-black text-white" value="groundingdino">Grounding DINO Swin-T</option>
                   <option className="bg-black text-white" value="florence2">Florence-2 VLM</option>

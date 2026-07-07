@@ -2,9 +2,6 @@ import { Outlet, Link, useLocation } from 'react-router';
 import {
   Video,
   Target,
-  TrendingUp,
-  MessageSquare,
-  Sparkles,
   BarChart3,
   Gauge,
   History as HistoryIcon,
@@ -14,12 +11,9 @@ import {
 } from 'lucide-react';
 
 const navItems = [
-  { path: '/', icon: BarChart3, label: 'Dashboard', color: 'text-white' },
-  { path: '/live-camera', icon: Video, label: 'Live Camera', color: 'text-[#FF0040]' },
-  { path: '/object-detection', icon: Target, label: 'Detection', color: 'text-[#00D4FF]' },
-  { path: '/object-tracking', icon: TrendingUp, label: 'Tracking', color: 'text-[#39FF14]' },
-  { path: '/vision-language', icon: MessageSquare, label: 'VL Query', color: 'text-[#00FFFF]' },
-  { path: '/few-shot-learning', icon: Sparkles, label: 'Few-Shot', color: 'text-[#FF6B35]' },
+  { path: '/', icon: BarChart3, label: 'Dashboard', color: 'text-[#22D3C8]' },
+  { path: '/live-tracking', icon: Video, label: 'Live Tracking', color: 'text-[#22D3C8]' },
+  { path: '/analyze-image', icon: Target, label: 'Analyze Image', color: 'text-[#22D3C8]' },
   { path: '/comparative-analysis', icon: BarChart3, label: 'Comparison', color: 'text-[#9D4EDD]' },
   { path: '/performance', icon: Gauge, label: 'Performance', color: 'text-[#FFD60A]' },
   { path: '/history', icon: HistoryIcon, label: 'History', color: 'text-[#06D6A0]' },
@@ -33,15 +27,15 @@ export default function Root() {
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-[rgba(220,20,60,0.3)] bg-black/40 backdrop-blur-xl flex flex-col">
+      <aside className="w-64 border-r border-[rgba(34,211,200,0.25)] bg-black/40 backdrop-blur-xl flex flex-col">
         {/* Logo */}
-        <div className="p-6 border-b border-[rgba(220,20,60,0.3)]">
+        <div className="p-6 border-b border-[rgba(34,211,200,0.25)]">
           <h1 className="text-2xl font-bold text-white mb-1 tracking-tight">
-            <span className="text-[#DC143C]">Insight</span>Vision
+            <span className="text-[#22D3C8]">Insight</span>Vision
           </h1>
           <p className="text-xs text-gray-400 mb-3">Vision-Language Empowered Detection</p>
-          <div className="inline-flex px-2 py-1 text-[10px] font-bold tracking-wider uppercase border border-[#00D4FF]/50 text-[#00D4FF] bg-[#00D4FF]/10 rounded shadow-[0_0_8px_rgba(0,212,255,0.3)]">
-            Architecture Preview v1.0 (Phase 1)
+          <div className="inline-flex px-2 py-1 text-[10px] font-bold tracking-wider uppercase border border-[#22D3C8]/50 text-[#22D3C8] bg-[#22D3C8]/10 rounded shadow-[0_0_8px_rgba(34,211,200,0.3)]">
+            Architecture Preview v1.0 (Phase 2)
           </div>
         </div>
 
@@ -56,7 +50,7 @@ export default function Root() {
                 key={item.path}
                 to={item.path}
                 className={`flex items-center gap-3 px-4 py-3 rounded-lg mb-1 transition-all group ${isActive
-                    ? 'bg-[rgba(220,20,60,0.2)] border border-[#DC143C] glow-red'
+                    ? 'bg-[rgba(34,211,200,0.15)] border border-[#22D3C8] glow-cyan'
                     : 'hover:bg-[rgba(255,255,255,0.05)]'
                   }`}
               >
@@ -73,15 +67,15 @@ export default function Root() {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-[rgba(220,20,60,0.3)]">
+        <div className="p-4 border-t border-[rgba(34,211,200,0.25)]">
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-1.5 mb-2 bg-[#39FF14]/10 border border-[#39FF14]/30 px-2 py-1 rounded text-[#39FF14]">
+            <div className="flex items-center gap-1.5 mb-2 bg-[#22D3C8]/10 border border-[#22D3C8]/30 px-2 py-1 rounded text-[#22D3C8]">
               <ShieldCheck className="w-3.5 h-3.5" />
               <span className="text-[10px] uppercase font-bold tracking-wider">Academic License Verified</span>
             </div>
             <div className="text-xs text-gray-500 text-center">
               <p>Research Project</p>
-              <p className="text-[#DC143C] mt-1">FYP 2026</p>
+              <p className="text-[#22D3C8] mt-1">FYP 2026</p>
             </div>
           </div>
         </div>
