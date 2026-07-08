@@ -8,7 +8,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Add GroundingDINO source to path
-_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO")
+_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO_sam3")
 if _DINO_ROOT not in sys.path:
     sys.path.insert(0, _DINO_ROOT)
 
@@ -75,6 +75,22 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Failed to init QueryParser: {e}")
         ml_models["query_parser"] = None
+
+    # ── 4. Load SAM 3 Image Model ───────────────────────────────────────────
+    logger.info("Loading SAM3 image model...")
+    t_sam3 = time.time()
+    try:
+        from sam3.model_builder import build_sam3_image_model
+        from sam3.model.sam3_image_processor import Sam3Processor
+        model_sam3 = build_sam3_image_model()
+        processor_sam3 = Sam3Processor(model_sam3)
+        ml_models["sam3_model"] = model_sam3
+        ml_models["sam3_processor"] = processor_sam3
+        logger.info(f"SAM3 image model loaded in {(time.time()-t_sam3)*1000:.0f} ms.")
+    except Exception as e:
+        logger.error(f"Failed to load SAM3: {e}")
+        ml_models["sam3_model"] = None
+        ml_models["sam3_processor"] = None
 
     yield
 
