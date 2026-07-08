@@ -87,6 +87,25 @@ def test_gemma4():
         
         print(f"  Latency: {latency:.2f} seconds")
         print(f"  Gemma 4 OCR output: '{generated_text}'")
+        
+        # Load the original image using cv2 to draw text on it
+        img_cv = cv2.imread(str(img_path))
+        if img_cv is not None:
+            # Clean up text output to write to screen
+            clean_text = generated_text.replace("\n", " ").strip()
+            # Draw OCR text at the top-left of the image (or near the license plate)
+            cv2.putText(img_cv, f"Gemma 4 OCR: {clean_text}", (50, 50),
+                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+            
+            # Draw a box around the license plate region for visual guidance
+            # Plate is located at [676, 180, 742, 206] on ocr_check1 and similar locations
+            cv2.rectangle(img_cv, (676, 180), (742, 206), (0, 255, 0), 2)
+            
+            out_dir = "outputs"
+            os.makedirs(out_dir, exist_ok=True)
+            out_path = os.path.join(out_dir, f"gemma4_ocr_result_{filename}")
+            cv2.imwrite(out_path, img_cv)
+            print(f"  Saved visual result to: {out_path}")
 
 if __name__ == "__main__":
     test_gemma4()

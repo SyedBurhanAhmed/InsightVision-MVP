@@ -5,7 +5,6 @@ import cv2
 import torch
 from PIL import Image
 from typing import Dict, Any, List
-from ultralytics import SAM
 
 from app.services.segmenter_base import SegmenterBase
 
@@ -21,6 +20,7 @@ class SAM2Segmenter(SegmenterBase):
 
     def load_model(self):
         if self.model is None:
+            from ultralytics import SAM
             logger.info(f"Loading SAM2 model '{self.model_path}'...")
             t0 = time.time()
             self.model = SAM(self.model_path)
@@ -124,17 +124,22 @@ class SAM3Segmenter(SegmenterBase):
 
     def load_model(self):
         if self.model is None:
-            try:
-                from sam3.model_builder import build_sam3_image_model
-                from sam3.model.sam3_image_processor import Sam3Processor
-                logger.info("Loading SAM3 model (848M parameters)...")
-                t0 = time.time()
-                self.model = build_sam3_image_model()
-                self.processor = Sam3Processor(self.model)
-                logger.info(f"SAM3 model loaded in {time.time() - t0:.1f}s.")
-            except ImportError as e:
-                logger.error(f"SAM3 import failed: {e}. Ensure you are in the python 3.12 environment and 'sam3' is installed.")
-                raise ImportError("sam3 package not found. Run 'pip install -e .' in the cloned sam3 repo.")
+            from app.core.state import ml_models
+            self.model = ml_models.get("sam3_model")
+            self.processor = ml_models.get("sam3_processor")
+            
+            if self.model is None:
+                try:
+                    from sam3.model_builder import build_sam3_image_model
+                    from sam3.model.sam3_image_processor import Sam3Processor
+                    logger.info("Loading SAM3 model (fallback loading)...")
+                    t0 = time.time()
+                    self.model = build_sam3_image_model()
+                    self.processor = Sam3Processor(self.model)
+                    logger.info(f"SAM3 model loaded in {time.time() - t0:.1f}s.")
+                except ImportError as e:
+                    logger.error(f"SAM3 import failed: {e}. Ensure you are in the python 3.12 environment and 'sam3' is installed.")
+                    raise ImportError("sam3 package not found. Run 'pip install -e .' in the cloned sam3 repo.")
 
     def segment(self, image: np.ndarray, boxes: list[list[float]]) -> dict:
         """
@@ -155,17 +160,64 @@ class SAM3Segmenter(SegmenterBase):
         image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
         
         try:
-            inference_state = self.processor.set_image(image_pil)
-            for box in boxes:
-                # Prompt SAM3 with box coordinates [x1, y1, x2, y2]
-                output = self.processor.set_box_prompt(state=inference_state, box=box)
-                if "masks" in output and len(output["masks"]) > 0:
-                    mask = output["masks"][0]
-                    if isinstance(mask, torch.Tensor):
-                        mask = mask.cpu().numpy().astype(np.uint8)
-                    masks.append(mask)
-                else:
-                    masks.append(np.zeros((h, w), dtype=np.uint8))
+            import torch
+            with torch.no_grad():
+                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                    inference_state = self.processor.set_image(image_pil)
+                    for box in boxes:
+                        # Normalize box to cx, cy, w_norm, h_norm in range [0, 1]
+                        x1, y1, x2, y2 = box
+                        cx = ((x1 + x2) / 2.0) / w
+                        cy = ((y1 + y2) / 2.0) / h
+                        w_norm = (x2 - x1) / w
+                        h_norm = (y2 - y1) / h
+                        normalized_box = [cx, cy, w_norm, h_norm]
+                        
+                        self.processor.reset_all_prompts(inference_state)
+                        
+                        output = self.processor.add_geometric_prompt(
+                            box=normalized_box, label=True, state=inference_state
+                        )
+                        if "masks" in output and len(output["masks"]) > 0:
+                            sam_boxes = output.get("boxes", [])
+                            best_idx = 0
+                            best_iou = -1.0
+                            
+                            if len(sam_boxes) > 0:
+                                for idx, sbox in enumerate(sam_boxes):
+                                    if isinstance(sbox, torch.Tensor):
+                                        sbox = sbox.cpu().float().numpy()
+                                    sx1, sy1, sx2, sy2 = sbox
+                                    
+                                    # Compute intersection with prompt box
+                                    ix1 = max(x1, sx1)
+                                    iy1 = max(y1, sy1)
+                                    ix2 = min(x2, sx2)
+                                    iy2 = min(y2, sy2)
+                                    
+                                    iw = max(0.0, ix2 - ix1)
+                                    ih = max(0.0, iy2 - iy1)
+                                    intersection = iw * ih
+                                    
+                                    # Compute union
+                                    area_track = (x2 - x1) * (y2 - y1)
+                                    area_sam = (sx2 - sx1) * (sy2 - sy1)
+                                    union = area_track + area_sam - intersection
+                                    
+                                    iou = intersection / union if union > 0 else 0.0
+                                    
+                                    if iou > best_iou:
+                                        best_iou = iou
+                                        best_idx = idx
+                            
+                            mask = output["masks"][best_idx]
+                            if isinstance(mask, torch.Tensor):
+                                mask = mask.cpu().float().numpy().astype(np.uint8)
+                            if len(mask.shape) == 3 and mask.shape[0] == 1:
+                                mask = mask[0]
+                            masks.append(mask)
+                        else:
+                            masks.append(np.zeros((h, w), dtype=np.uint8))
         except Exception as e:
             logger.error(f"SAM3 segmentation failed: {e}")
             # Fallback

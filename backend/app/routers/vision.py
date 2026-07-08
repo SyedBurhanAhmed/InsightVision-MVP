@@ -18,7 +18,7 @@ from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.core.state import ml_models
 from app.models.schemas import DetectResponse, DetectedObject
 
-_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO")
+_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO_sam3")
 if _DINO_ROOT not in sys.path:
     sys.path.insert(0, _DINO_ROOT)
 
@@ -175,7 +175,36 @@ async def detect_objects(
     #         logger.error(f"Florence-2 error: {e}")
     #         raise HTTPException(status_code=500, detail=f"Florence-2 error: {e}")
 
-    # ── ROUTE 2: GroundingDINO Grounding ─────────────────────────────────────
+    # ── ROUTE 2: SAM3 Grounding ──────────────────────────────────────────────
+    elif model == "sam3":
+        if not ml_models.get("sam3_model"):
+            raise HTTPException(status_code=503, detail="SAM 3 model not loaded.")
+
+        from app.services.detector import SAM3Detector
+        detector = SAM3Detector(ml_models["sam3_model"])
+        
+        try:
+            results = detector.detect(img_rgb, prompt, conf_threshold)
+            inference_ms = results["inference_ms"]
+            for i, (box, score, label) in enumerate(
+                zip(results["boxes"], results["scores"], results["labels"])
+            ):
+                x1, y1, x2, y2 = box
+                color = _COLORS[i % len(_COLORS)]
+                obj = DetectedObject.from_xyxy(
+                    obj_id=f"{label[:1].upper()}{i+1:03d}",
+                    label=label,
+                    score=float(score),
+                    x1=x1, y1=y1, x2=x2, y2=y2,
+                    img_w=img_w, img_h=img_h,
+                    color=color,
+                )
+                objects.append(obj)
+        except Exception as e:
+            logger.error(f"SAM3 detector error: {e}")
+            raise HTTPException(status_code=500, detail=f"SAM3 detector error: {e}")
+
+    # ── ROUTE 3: GroundingDINO Grounding ─────────────────────────────────────
     else:
         if not ml_models.get("detector"):
             raise HTTPException(status_code=503, detail="GroundingDINO detector model not loaded.")
@@ -203,6 +232,25 @@ async def detect_objects(
         except Exception as e:
             logger.error(f"Detector error: {e}")
             raise HTTPException(status_code=500, detail=f"Detector error: {e}")
+
+    # ── ROUTE 3: SAM 3 Segmentation refinement if masks toggle is enabled ──
+    if masks and objects:
+        try:
+            from app.services.segmenter import SAM3Segmenter
+            segmenter = SAM3Segmenter()
+            
+            boxes_to_seg = []
+            for obj in objects:
+                x, y, w, h = obj.bbox
+                boxes_to_seg.append([x, y, x + w, y + h])
+                
+            t_seg_start = time.time()
+            seg_res = segmenter.segment(img_rgb, boxes_to_seg)
+            seg_ms = (time.time() - t_seg_start) * 1000
+            inference_ms += seg_ms
+            logger.info(f"SAM3 Segmenter processed {len(objects)} object(s) in {seg_ms:.1f}ms")
+        except Exception as e:
+            logger.error(f"SAM3 Segmenter failed: {e}")
 
     t_total = (time.time() - t_start) * 1000
     logger.info(
