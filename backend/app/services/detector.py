@@ -114,8 +114,8 @@ class SAM3Detector(DetectorBase):
         
         box_thresh = conf_threshold if conf_threshold is not None else settings.BOX_THRESHOLD
         
-        # Convert NumPy image (assuming BGR if from cv2) to RGB for PIL
-        image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+        # Convert NumPy image (expecting RGB as per detector standard) to PIL Image
+        image_pil = Image.fromarray(image).convert("RGB")
         
         xyxy = []
         scores_list = []

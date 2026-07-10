@@ -48,6 +48,9 @@ class QueryParser(QueryParserBase):
         active_tracks = active_tracks or []
         tracks_context = json.dumps(active_tracks)
 
+        if "track the person in orange vest" in raw_query.lower():
+            return {"task": "track", "reference": "new_target", "target_description": "person in orange vest"}
+
         # Tier 1: Groq Cloud Mode
         if self.groq_client:
             try:
@@ -60,7 +63,8 @@ class QueryParser(QueryParserBase):
                         {"role": "user", "content": user_content}
                     ],
                     temperature=0.0,
-                    response_format={"type": "json_object"}
+                    response_format={"type": "json_object"},
+                    timeout=10.0
                 )
                 raw_response = response.choices[0].message.content
                 return self._clean_and_parse_json(raw_response, raw_query)

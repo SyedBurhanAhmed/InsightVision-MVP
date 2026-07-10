@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Target, Sliders, Eye, EyeOff, Plus, Sparkles, Copy, Download } from 'lucide-react';
+import { Target, Sliders, Eye, EyeOff, Plus, Sparkles, Download } from 'lucide-react';
 
 const objectClasses = [
   { id: 1, name: 'Person', count: 3, enabled: true, color: '#FF0040' },

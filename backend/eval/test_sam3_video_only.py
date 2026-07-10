@@ -10,10 +10,14 @@ from pathlib import Path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 def process_sam3_only_video():
-    input_path = "images/long_output3.mp4"
-    output_path = "images/output/checking_sam3_only_person.mp4"
+    eval_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(eval_dir, "..", ".."))
+    input_path = os.path.join(project_root, "images", "inisghtvision_testing_video.mp4")
+    # input_path = os.path.join(project_root, "images", "long_output3.mp4")
+    # output_path = os.path.join(project_root, "images", "output", "checking_sam3_only_person.mp4")
+    output_path = os.path.join(project_root, "images", "output", "checking_sam3_orange_vest_wearing.mp4")
     max_frames = 200  # Process first 200 frames for quick verification
-    prompt = "person in white"
+    prompt = "person wearing orange vest"
 
     print(f"=== InsightVision SAM 3 ONLY Video Tracking (No DINO) ===")
     print(f"Input: {input_path}")

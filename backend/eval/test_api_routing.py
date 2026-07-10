@@ -24,14 +24,21 @@ def test_api_routing():
     with TestClient(app) as client:
         print("✔ App lifespan loaded and models initialized.")
         
-        # Test image path
-        image_path = "images/temp_sam3_frames/00000.jpg"
+        # Resolve paths relative to project root
+        eval_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.abspath(os.path.join(eval_dir, "..", ".."))
+        image_dir = os.path.join(project_root, "images", "temp_sam3_frames")
+        image_path = os.path.join(image_dir, "00000.jpg")
+        video_path = os.path.join(project_root, "images", "long_output3.mp4")
+        
         if not os.path.exists(image_path):
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Video file not found at {video_path}. Please make sure you are running from the workspace or the files exist.")
             # Fallback extraction
-            cap = cv2.VideoCapture("images/long_output3.mp4")
+            cap = cv2.VideoCapture(video_path)
             ret, frame = cap.read()
             if ret:
-                os.makedirs("images/temp_sam3_frames", exist_ok=True)
+                os.makedirs(image_dir, exist_ok=True)
                 cv2.imwrite(image_path, frame)
             cap.release()
 

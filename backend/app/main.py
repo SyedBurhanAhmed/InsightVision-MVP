@@ -100,6 +100,7 @@ async def lifespan(app: FastAPI):
 
 # ── App factory ─────────────────────────────────────────────────────────────
 from app.routers import vision, query as query_router
+from app.routers import session as session_router
 
 app = FastAPI(title="InsightVision API", version="0.3.0", lifespan=lifespan)
 
@@ -113,6 +114,7 @@ app.add_middleware(
 
 app.include_router(vision.router, prefix="/api")
 app.include_router(query_router.router, prefix="/api/vision")
+app.include_router(session_router.router)   # WS /ws/session — live session endpoint
 
 
 @app.get("/health")
@@ -129,7 +131,8 @@ def health_check():
         "gpu": has_gpu,
         "device": device_name,
         "vram_gb": vram_gb,
-        "detector_loaded": ml_models.get("detector") is not None,
-        "florence_loaded": ml_models.get("florence_model") is not None,
-        "query_parser_loaded": ml_models.get("query_parser") is not None,
+        "detector_loaded":      ml_models.get("detector") is not None,
+        "sam3_loaded":           ml_models.get("sam3_model") is not None,
+        "florence_loaded":       ml_models.get("florence_model") is not None,
+        "query_parser_loaded":   ml_models.get("query_parser") is not None,
     }

@@ -7,6 +7,9 @@ _DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO")
 class Settings(BaseSettings):
     PROJECT_NAME: str = "InsightVision API"
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+
     # GroundingDINO — paths to the already-downloaded weights and config
     GROUNDING_DINO_CONFIG_PATH: str = os.path.join(
         _DINO_ROOT, "groundingdino/config/GroundingDINO_SwinT_OGC.py"

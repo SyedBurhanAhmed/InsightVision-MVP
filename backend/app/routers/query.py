@@ -48,6 +48,17 @@ async def vlm_query(
     if not query:
         raise HTTPException(status_code=400, detail="Query string must not be empty.")
 
+    # Read image bytes first for cache lookup
+    raw = await image.read()
+
+    # Check cache first
+    from app.services.cache import cache
+    cached_response = cache.get_static_cache(raw, query, detector_backend, conf_threshold)
+    if cached_response:
+        logger.info(f"Static image cache hit for query '{query}'")
+        cached_response["total_ms"] = round((time.time() - t_start) * 1000, 1)
+        return QueryResponse(**cached_response)
+
     # ── 1. Parse query → task + detector prompt ──────────────────────────────
     parser = ml_models.get("query_parser")
     t_parser = time.time()
@@ -65,7 +76,6 @@ async def vlm_query(
     logger.info(f"query | task={task} | prompt='{detection_prompt}' | conf={effective_conf} | backend={detector_backend}")
 
     # ── 2. Read & decode image ───────────────────────────────────────────────
-    raw = await image.read()
     nparr = np.frombuffer(raw, np.uint8)
     img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
     if img_bgr is None:
@@ -174,7 +184,7 @@ async def vlm_query(
         f"parser={parser_ms:.0f}ms infer={inference_ms:.0f}ms total={total_ms:.0f}ms"
     )
 
-    return QueryResponse.build(
+    response = QueryResponse.build(
         query_text=query,
         answer_text=answer,
         task=task,
@@ -184,3 +194,12 @@ async def vlm_query(
         total_ms=total_ms,
         device=ml_models.get("device", "cpu"),
     )
+
+    # Cache response in Redis
+    try:
+        from app.services.cache import cache
+        cache.set_static_cache(raw, query, response.model_dump(), detector_backend, conf_threshold)
+    except Exception as e:
+        logger.warning(f"Failed to cache static image query: {e}")
+
+    return response
