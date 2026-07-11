@@ -1,7 +1,6 @@
 import { createBrowserRouter } from "react-router";
 import Root from "./components/Root";
 import Dashboard from "./components/pages/Dashboard";
-import LiveCamera from "./components/pages/LiveCamera";
 import ObjectDetection from "./components/pages/ObjectDetection";
 import ObjectTracking from "./components/pages/ObjectTracking";
 import ComparativeAnalysis from "./components/pages/ComparativeAnalysis";
@@ -16,7 +15,7 @@ export const router = createBrowserRouter([
     Component: Root,
     children: [
       { index: true, Component: Dashboard },
-      { path: "live-tracking", Component: LiveCamera },
+      { path: "live-tracking", Component: Dashboard },
       { path: "analyze-image", Component: ObjectDetection },
       { path: "object-tracking", Component: ObjectTracking },
       { path: "comparative-analysis", Component: ComparativeAnalysis },

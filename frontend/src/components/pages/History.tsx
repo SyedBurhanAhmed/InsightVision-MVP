@@ -12,7 +12,7 @@ const sessionHistoryData = [
     status: 'completed',
     icon: Video,
     color: '#FF0040',
-    engine: 'YOLOv11'
+    engine: 'DINO'
   },
   {
     id: 2,
@@ -36,7 +36,7 @@ const sessionHistoryData = [
     status: 'completed',
     icon: Video,
     color: '#00D4FF',
-    engine: 'YOLOv11'
+    engine: 'DINO'
   },
   {
     id: 4,
@@ -60,7 +60,7 @@ const sessionHistoryData = [
     status: 'completed',
     icon: Video,
     color: '#FF6B35',
-    engine: 'YOLOv11'
+    engine: 'DINO'
   },
   {
     id: 6,
@@ -113,7 +113,7 @@ function HistoryCard({ item }: { item: SessionItem }) {
             <div className="flex items-center gap-3">
               {item.engine && (
                 <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
-                  item.engine === 'YOLOv11' ? 'bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/30' :
+                  item.engine === 'DINO' ? 'bg-[#00D4FF]/10 text-[#00D4FF] border border-[#00D4FF]/30' :
                   item.engine === 'VLM' ? 'bg-[#9D4EDD]/10 text-[#9D4EDD] border border-[#9D4EDD]/30' :
                   'bg-[#FFD60A]/10 text-[#FFD60A] border border-[#FFD60A]/30'
                 }`}>

@@ -36,7 +36,7 @@ export default function FewShotLearning() {
   const [showUpload, setShowUpload] = useState(false);
   const [newObjectName, setNewObjectName] = useState('');
   const [autoLabel, setAutoLabel] = useState(true);
-  const [baseModel, setBaseModel] = useState('yoloworld');
+  const [baseModel, setBaseModel] = useState('groundingdino');
 
   const handleStartTraining = () => {
     setIsTraining(true);
@@ -216,9 +216,9 @@ export default function FewShotLearning() {
                   onChange={(e) => setBaseModel(e.target.value)}
                   className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#DC143C]"
                 >
-                  <option className="bg-black text-white" value="yoloworld">YOLO-World (Fast)</option>
                   <option className="bg-black text-white" value="groundingdino">Grounding DINO (Precision)</option>
-                  <option className="bg-black text-white" value="yolov11-florence2">YOLOv11 + Florence-2</option>
+                  <option className="bg-black text-white" value="sam3">SAM 3 (Instance Segmentation)</option>
+                  <option className="bg-black text-white" value="dino-gemma4">DINO + Gemma 4 VLM</option>
                 </select>
               </div>
 
@@ -244,7 +244,7 @@ export default function FewShotLearning() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Expected VRAM Impact</span>
                   <span className="text-xs font-mono text-[#FFD60A] bg-[#FFD60A]/10 px-2 py-1 rounded border border-[#FFD60A]/20">
-                    {baseModel === 'groundingdino' ? '+1.2GB' : baseModel === 'yolov11-florence2' ? '+850MB' : '+400MB'}
+                    {baseModel === 'groundingdino' ? '+1.2 GB' : baseModel === 'sam3' ? '+2.4 GB' : '+3.1 GB'}
                   </span>
                 </div>
               </div>

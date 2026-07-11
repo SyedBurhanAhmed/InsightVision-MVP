@@ -22,7 +22,7 @@ const teamMembers = [
 ];
 
 const technologies = [
-  { name: 'YOLOv11', category: 'Object Detection', color: '#00D4FF', icon: Target },
+  { name: 'Grounding DINO', category: 'Object Detection', color: '#00D4FF', icon: Target },
   { name: 'Florence-2', category: 'Vision-Language', color: '#00FFFF', icon: Brain },
   { name: 'FastAPI (Microservice)', category: 'Backend', color: '#9D4EDD', icon: Server },
   { name: 'PyTorch', category: 'Deep Learning', color: '#FF6B35', icon: Layers },
@@ -33,11 +33,11 @@ const technologies = [
 ];
 
 const features = [
-  'Real-time object detection with YOLO',
+  'Real-time object detection with Grounding DINO',
   'Natural language vision queries',
   'Multi-object tracking with persistent IDs',
   'Few-shot learning for custom objects',
-  'Comparative analysis (YOLO vs VLM)',
+  'Comparative analysis (DINO vs SAM vs VLM)',
   'Performance monitoring & optimization',
   'Semantic segmentation',
   'Session history & export',
@@ -69,8 +69,8 @@ export default function About() {
           using natural language queries while maintaining the speed and efficiency of traditional CV approaches.
         </p>
         <p className="text-gray-400 leading-relaxed">
-          This research project explores the trade-offs between classical deep learning methods (YOLO) and
-          modern vision-language models (VLMs), providing comprehensive comparative analysis for real-world
+          This research project explores the trade-offs between offline localizer models (Grounding DINO / SAM 3)
+          and modern vision-language models (VLMs), providing comprehensive comparative analysis for real-world
           computer vision applications.
         </p>
       </div>
@@ -101,7 +101,7 @@ export default function About() {
             <div>
               <h4 className="text-white font-semibold mb-2">1. Comparative Analysis</h4>
               <p className="text-sm text-gray-400">
-                Evaluate performance differences between YOLO and VLM approaches in terms of accuracy,
+                Evaluate performance differences between localizer (DINO/SAM3) and VLM approaches in terms of accuracy,
                 speed, and resource utilization.
               </p>
             </div>

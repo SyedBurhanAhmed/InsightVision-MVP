@@ -38,7 +38,7 @@ const sampleQueries = [
 
 const vlmEngines = [
   { value: 'florence2', label: 'Florence-2' },
-  { value: 'yoloworld', label: 'YOLO-World' },
+  { value: 'sam3', label: 'SAM 3' },
   { value: 'qwenvl', label: 'Qwen2.5-VL' },
   { value: 'owlv2', label: 'OWLv2' },
 ];

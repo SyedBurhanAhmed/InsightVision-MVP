@@ -38,8 +38,8 @@ const resourceData = [
 ];
 
 const modelPerformance = [
-  { model: 'YOLOv11', fps: 58, accuracy: 92, memory: 2.4 },
-  { model: 'YOLO-World', fps: 52, accuracy: 90, memory: 2.8 },
+  { model: 'Grounding DINO', fps: 58, accuracy: 92, memory: 2.4 },
+  { model: 'SAM 3', fps: 52, accuracy: 90, memory: 2.8 },
   { model: 'Florence-2', fps: 32, accuracy: 94, memory: 5.8 },
   { model: 'Qwen-VL', fps: 45, accuracy: 91, memory: 4.2 },
 ];

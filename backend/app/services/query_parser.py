@@ -51,6 +51,16 @@ class QueryParser(QueryParserBase):
         if "track the person in orange vest" in raw_query.lower():
             return {"task": "track", "reference": "new_target", "target_description": "person in orange vest"}
 
+        # Quick Heuristic Routing for simple direct commands to avoid LLM latency
+        q_lower = raw_query.lower().strip()
+        if q_lower in (
+            "read", "ocr", "read the text", "read the text on the sign", "read text", "read the sign",
+            "segment", "mask", "segment the tracked object", "segment the object", "mask the object",
+            "track the person", "track person"
+        ) or re.match(r"^(read|ocr|segment|mask) (the )?tracked (object|item|person|target|box)$", q_lower):
+            logger.info(f"QueryParser [Heuristic]: Direct match for '{raw_query}'. Routing without LLM.")
+            return self._regex_fallback_parse_context(raw_query, active_tracks)
+
         # Tier 1: Groq Cloud Mode
         if self.groq_client:
             try:

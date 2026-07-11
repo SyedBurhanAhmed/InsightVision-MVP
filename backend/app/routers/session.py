@@ -39,6 +39,7 @@ from typing import Any, Dict, List, Optional, Set
 import cv2
 import numpy as np
 import torch
+from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 from app.core.state import ml_models
@@ -46,6 +47,24 @@ from app.services.track_manager import TrackManager
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
+
+# Persisted session history archive
+session_history_dict: Dict[str, Dict[str, Any]] = {}
+
+@router.get("/api/session/history")
+def get_session_history():
+    """Return all tracked session records sorted by timestamp descending."""
+    return sorted(
+        session_history_dict.values(),
+        key=lambda x: x["timestamp"],
+        reverse=True
+    )
+
+@router.post("/api/session/history/clear")
+def clear_session_history():
+    """Clear all session history records."""
+    session_history_dict.clear()
+    return {"status": "ok"}
 
 # ── Adaptive re-detection thresholds ─────────────────────────────────────────
 REDETECT_COOLDOWN_S = 0.5    # minimum interval between re-detects
@@ -277,6 +296,28 @@ async def _lock_on(
             backend=state.localizer,
             lock_on_bbox=list(t["bbox"]),
         )
+        
+        # Add to history record
+        record = session_history_dict.get(state.session_id)
+        if record:
+            target = next((x for x in record["targets"] if x["track_id"] == tid), None)
+            if not target:
+                target = {
+                    "track_id": tid,
+                    "label": prompt,
+                    "lock_on_time": datetime.now().strftime("%H:%M:%S"),
+                    "events": []
+                }
+                record["targets"].append(target)
+            
+            target["events"].append({
+                "type": "lock_on",
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "query": f"track the {prompt}",
+                "result": f"Locked on target #{tid} (confidence: {round(t['confidence'], 2)}, latency: {round(lock_ms, 1)}ms)",
+                "latency_ms": round(lock_ms, 1)
+            })
+
         await _emit(state, {
             "type": "lock_on",
             "track_id": tid,
@@ -796,6 +837,19 @@ async def _run_followup_query(state: SessionState, task: str, track_id: int):
 
         total_ms = (time.time() - t0) * 1000
 
+        # Add to history record
+        record = session_history_dict.get(state.session_id)
+        if record:
+            target = next((x for x in record["targets"] if x["track_id"] == track_id), None)
+            if target:
+                target["events"].append({
+                    "type": task,
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "query": f"{task} command",
+                    "result": summary or str(data),
+                    "latency_ms": round(total_ms, 1)
+                })
+
         await _emit(state, {
             "type": "query_result",
             "task":  task,
@@ -1063,6 +1117,21 @@ async def websocket_session(ws: WebSocket):
             last_frame_t=0.0,
         )
         _sessions[session_id] = state
+        
+        # Add to global history archive
+        session_history_dict[session_id] = {
+            "id": session_id,
+            "type": "Live Session",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "start_time": time.time(),
+            "duration": "0s",
+            "source": source,
+            "url": url,
+            "localizer": localizer,
+            "status": "active",
+            "targets": []
+        }
+
         sender_task = asyncio.create_task(sender(out_q))
         state.sender_task = sender_task
 
@@ -1093,6 +1162,18 @@ async def websocket_session(ws: WebSocket):
     finally:
         # ── Step 10: Teardown ─────────────────────────────────────────────
         if state:
+            # Update final duration and status in history record
+            record = session_history_dict.get(state.session_id)
+            if record:
+                elapsed = time.time() - record["start_time"]
+                if elapsed >= 60:
+                    record["duration"] = f"{int(elapsed // 60)}m {int(elapsed % 60)}s"
+                else:
+                    record["duration"] = f"{int(elapsed)}s"
+                record["status"] = "completed"
+                # Keep objects tracked count
+                record["objects"] = len(record["targets"])
+            
             _cleanup_session(state)
             _sessions.pop(state.session_id, None)
         if sender_task and not sender_task.done():
