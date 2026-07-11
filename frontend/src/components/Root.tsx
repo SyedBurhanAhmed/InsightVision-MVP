@@ -6,11 +6,15 @@ import {
   History as HistoryIcon,
   Settings as SettingsIcon,
   Info,
-  ShieldCheck
+  ShieldCheck,
+  Video,
+  Camera
 } from 'lucide-react';
 
 const navItems = [
   { path: '/', icon: BarChart3, label: 'Dashboard' },
+  { path: '/live-tracking', icon: Video, label: 'Live Tracking' },
+  { path: '#', icon: Camera, label: 'Multi-Camera', isDisabled: true },
   { path: '/analyze-image', icon: Target, label: 'Analyze Image' },
   { path: '/comparative-analysis', icon: BarChart3, label: 'Comparison' },
   { path: '/performance', icon: Gauge, label: 'Performance' },
@@ -39,7 +43,25 @@ export default function Root() {
         <nav className="flex-1 overflow-y-auto py-4 px-3">
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = location.pathname === item.path;
+            const isActive = !item.isDisabled && location.pathname === item.path;
+
+            if (item.isDisabled) {
+              return (
+                <div
+                  key={item.label}
+                  className="flex items-center justify-between px-4 py-3 rounded-lg mb-1 text-slate-500 opacity-45 cursor-not-allowed border border-transparent select-none"
+                  title="Cross-Camera Appearance Embedding Matching - Deferred to Phase 2"
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon className="w-5 h-5 shrink-0" strokeWidth={2} />
+                    <span className="text-sm font-semibold">{item.label}</span>
+                  </div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">
+                    Phase 2
+                  </span>
+                </div>
+              );
+            }
 
             return (
               <Link

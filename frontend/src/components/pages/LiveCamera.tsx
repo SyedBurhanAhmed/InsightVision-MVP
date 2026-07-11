@@ -118,27 +118,53 @@ export default function LiveCamera() {
             const cw = w * scaleX;
             const ch = h * scaleY;
 
-            // Draw bounding box with rounded corners outline
-            ctx.strokeStyle = '#06B6D4'; // SOTA primary cyan accent
+            // Draw bounding box outline with curated high-vibrancy track colors and neon glow
+            const colors = ['#00D4FF', '#39FF14', '#FF0055', '#FFD60A', '#9D4EDD', '#06B6D4'];
+            const color = colors[t.track_id % colors.length];
+
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 6;
+            ctx.strokeStyle = color;
             ctx.lineWidth = 2.5;
-            ctx.strokeRect(cx, cy, cw, ch);
+
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+              ctx.roundRect(cx, cy, cw, ch, 6);
+            } else {
+              ctx.rect(cx, cy, cw, ch);
+            }
+            ctx.stroke();
+
+            // Disable shadow blur for tag rendering to keep text crisp
+            ctx.shadowBlur = 0;
 
             // Draw clean tag above box
-            const tagText = `${t.label} #${t.track_id} (${t.confidence.toFixed(2)})`;
-            ctx.font = '500 11px Inter, sans-serif';
+            const confidencePct = Math.round(t.confidence * 100);
+            const tagText = `${t.label} #${t.track_id} (${confidencePct}%)`;
+            ctx.font = '600 11px Inter, system-ui, sans-serif';
             const textWidth = ctx.measureText(tagText).width;
+            const tagHeight = 22;
+            const tagY = cy - tagHeight - 4; // 4px margin above box
             
-            // Tag Background
-            ctx.fillStyle = 'rgba(8, 12, 20, 0.85)';
-            ctx.fillRect(cx, cy - 22, textWidth + 12, 22);
+            // Tag Background (Premium dark glass overlay)
+            ctx.fillStyle = 'rgba(10, 15, 30, 0.88)';
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+              ctx.roundRect(cx, tagY, textWidth + 24, tagHeight, 4);
+            } else {
+              ctx.rect(cx, tagY, textWidth + 24, tagHeight);
+            }
+            ctx.fill();
 
-            // Tag Accent Border Left
-            ctx.fillStyle = '#06B6D4';
-            ctx.fillRect(cx, cy - 22, 3, 22);
+            // Colored status indicator dot inside tag
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(cx + 8, tagY + tagHeight / 2, 3.5, 0, 2 * Math.PI);
+            ctx.fill();
 
             // Tag Text
-            ctx.fillStyle = '#F8FAFC';
-            ctx.fillText(tagText, cx + 8, cy - 7);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(tagText, cx + 18, tagY + 15);
           });
         }
       }

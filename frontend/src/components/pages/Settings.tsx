@@ -108,6 +108,25 @@ export default function Settings() {
                 </button>
               </div>
 
+              {/* Multi-Camera Tracking */}
+              <div className="flex items-center justify-between py-3 border-b border-[rgba(255,255,255,0.1)] opacity-50">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <p className="text-white font-semibold">Cross-Camera Re-ID</p>
+                    <span className="text-[9px] font-bold uppercase tracking-wider bg-slate-800 text-gray-400 px-1.5 py-0.5 rounded border border-gray-700">
+                      Phase 2
+                    </span>
+                  </div>
+                  <p className="text-sm text-gray-400">Match target appearance embeddings across camera streams</p>
+                </div>
+                <button
+                  disabled
+                  className="w-12 h-6 rounded-full bg-slate-800 flex items-center px-1 cursor-not-allowed border border-gray-700"
+                >
+                  <div className="w-4 h-4 bg-gray-600 rounded-full translate-x-0"></div>
+                </button>
+              </div>
+
               {/* Storage Location */}
               <div className="py-3 border-b border-[rgba(255,255,255,0.1)]">
                 <p className="text-white font-semibold mb-2">Storage Location</p>

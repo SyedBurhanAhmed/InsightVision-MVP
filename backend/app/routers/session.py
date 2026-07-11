@@ -66,6 +66,24 @@ def clear_session_history():
     session_history_dict.clear()
     return {"status": "ok"}
 
+@router.get("/api/benchmark")
+def get_benchmark_results():
+    """Return pipeline and model comparison benchmark results."""
+    import os
+    import json
+    json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/benchmark_results.json"))
+    if not os.path.exists(json_path):
+        try:
+            from eval.benchmark import generate_benchmark_results
+            generate_benchmark_results()
+        except Exception as e:
+            logger.error(f"Failed to auto-generate benchmark results: {e}")
+    if os.path.exists(json_path):
+        with open(json_path, "r") as f:
+            return json.load(f)
+    return {"error": "Benchmark results file not found"}
+
+
 # ── Adaptive re-detection thresholds ─────────────────────────────────────────
 REDETECT_COOLDOWN_S = 0.5    # minimum interval between re-detects
 CONF_DROP_THRESHOLD = 0.40   # per-track confidence floor
@@ -428,6 +446,27 @@ async def _adaptive_redetect(
                 track_id=tid, label=t["label"],
                 backend=state.localizer, lock_on_bbox=list(t["bbox"]),
             )
+            
+            # Add to history record
+            record = session_history_dict.get(state.session_id)
+            if record:
+                target = next((x for x in record["targets"] if x["track_id"] == tid), None)
+                if not target:
+                    target = {
+                        "track_id": tid,
+                        "label": t["label"],
+                        "lock_on_time": datetime.now().strftime("%H:%M:%S"),
+                        "events": []
+                    }
+                    record["targets"].append(target)
+                
+                target["events"].append({
+                    "type": "lock_on",
+                    "timestamp": datetime.now().strftime("%H:%M:%S"),
+                    "query": f"re-detect: track {t['label']}",
+                    "result": f"Locked on target #{tid} during adaptive re-detection",
+                    "latency_ms": 0.0
+                })
 
     await _emit(state, {
         "type": "redetect",
