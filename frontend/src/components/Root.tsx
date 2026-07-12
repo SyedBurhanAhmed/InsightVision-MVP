@@ -93,7 +93,7 @@ export default function Root() {
             </div>
             <div className="text-xs text-slate-500 text-center">
               <p>Research Project</p>
-              <p className="text-primary mt-1">FYP 2026</p>
+              <p className="text-primary mt-1">Capstone 2026</p>
             </div>
           </div>
         </div>

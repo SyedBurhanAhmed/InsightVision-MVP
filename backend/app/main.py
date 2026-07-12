@@ -3,6 +3,20 @@ import os
 import torch
 import logging
 import time
+
+# Check config to patch CUDA if hardware acceleration is disabled
+try:
+    import json
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../outputs/config.json"))
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            cfg = json.load(f)
+            if not cfg.get("hardware_acceleration", True):
+                print("Hardware Acceleration is DISABLED in config.json. Overriding CUDA availability to False.")
+                torch.cuda.is_available = lambda: False
+except Exception as e:
+    print(f"Error checking hardware acceleration in config: {e}")
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

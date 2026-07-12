@@ -27,13 +27,6 @@ const PRE_SAVED_CAMERAS = [
   { name: 'Lab Cam 3 - Assembly Line', url: 'rtsp://192.168.1.52/stream1' },
 ];
 
-const recentActivity = [
-  { id: 1, action: 'Live tracking session initialized', time: '2 minutes ago', type: 'camera' },
-  { id: 2, action: 'VLM OCR query resolved', time: '15 minutes ago', type: 'query' },
-  { id: 3, action: 'Grounding DINO target lock-on', time: '1 hour ago', type: 'lock-on' },
-  { id: 4, action: 'SAM 3 mask segments computed', time: '3 hours ago', type: 'segment' },
-];
-
 export default function Dashboard() {
   const [sourceMode, setSourceMode] = useState<'upload' | 'webcam' | 'rtsp'>('upload');
   const [localizer, setLocalizer] = useState<'grounding_dino' | 'sam3'>('grounding_dino');
@@ -64,11 +57,92 @@ export default function Dashboard() {
   const lastFrameTimeRef = useRef<number>(0);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const gpuUsage = 78; // static mock value
+  const [benchmarkData, setBenchmarkData] = useState<any>(null);
+  
+  useEffect(() => {
+    const backendHost = window.location.hostname;
+    fetch(`http://${backendHost}:8000/api/benchmark`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (json && json.vram_diagnostics) {
+          setBenchmarkData(json);
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to load benchmarks in Dashboard:", err);
+      });
+
+    fetch(`http://${backendHost}:8000/api/config`)
+      .then((res) => res.json())
+      .then((cfg) => {
+        if (cfg && cfg.default_model) {
+          setLocalizer(cfg.default_model);
+        }
+      })
+      .catch((err) => console.warn("Failed to load settings config in Dashboard:", err));
+  }, []);
+
+  const getVramUsage = () => {
+    if (!benchmarkData) return { used: '0.0', total: '16.0', pct: 0 };
+    const isReady = connState === 'READY';
+    const usedMb = isReady 
+      ? benchmarkData.vram_diagnostics.unified_pipeline_active_peak 
+      : benchmarkData.vram_diagnostics.dino_sam3_idle;
+    const totalMb = benchmarkData.vram_diagnostics.hardware_limit;
+    return {
+      used: (usedMb / 1024).toFixed(1),
+      total: (totalMb / 1024).toFixed(0),
+      pct: Math.round((usedMb / totalMb) * 100)
+    };
+  };
+
+  const vram = getVramUsage();
+  const gpuUsage = vram.pct;
+
   const getGpuColor = (usage: number) => {
     if (usage < 60) return 'from-primary to-[#0891B2]';
     if (usage <= 85) return 'from-warning to-[#D97706]';
     return 'from-destructive to-[#B91C1C]';
+  };
+
+  const getTrackingFps = () => {
+    if (!benchmarkData) return '0.0';
+    return localizer === 'sam3' 
+      ? benchmarkData.tracker_comparison.sam3_native.speed_fps 
+      : benchmarkData.tracker_comparison.boxmot_botsort.speed_fps;
+  };
+
+  const getOcrSuccessRate = () => {
+    if (!benchmarkData) return 0;
+    return localizer === 'sam3'
+      ? benchmarkData.localizer_comparison.sam3.ocr_success_rate
+      : benchmarkData.localizer_comparison.grounding_dino.ocr_success_rate;
+  };
+
+  const getRecentActivity = () => {
+    if (messages.length === 0) {
+      return [
+        { id: 'idle', action: 'System idle — ready for tracking session', time: 'Now', type: 'system' }
+      ];
+    }
+    return messages.slice(-4).reverse().map((msg) => {
+      let action = msg.text;
+      if (msg.type === 'command') {
+        action = `Query: "${msg.text}"`;
+      } else if (msg.type === 'status') {
+        action = `Status: ${msg.text}`;
+      } else if (msg.type === 'result') {
+        action = `VLM Output: ${msg.text}`;
+      } else if (msg.type === 'error') {
+        action = `Error: ${msg.text}`;
+      }
+      return {
+        id: msg.id,
+        action: action,
+        time: msg.timestamp || 'Just now',
+        type: msg.type
+      };
+    });
   };
 
   // Auto scroll to chat bottom inside container (prevents window jumping)
@@ -486,7 +560,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center justify-between text-xs font-mono text-slate-400 mt-2">
             <span>Tracking Rate:</span>
-            <span className="text-primary font-bold">25 FPS</span>
+            <span className="text-primary font-bold">{getTrackingFps()} FPS</span>
           </div>
         </div>
 
@@ -496,13 +570,13 @@ export default function Dashboard() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-xs uppercase font-mono font-bold text-slate-500 tracking-wider mb-1">VLM Agent Core</p>
-              <h3 className="text-lg font-bold text-white leading-none">Qwen2.5-VL / Florence</h3>
+              <h3 className="text-lg font-bold text-white leading-none">{benchmarkData ? benchmarkData.vlm_model : "Gemma 4"} [spec]</h3>
             </div>
             <MessageSquare className="w-6 h-6 text-primary group-hover:-translate-y-1 transition-transform" />
           </div>
           <div className="flex items-center justify-between text-xs font-mono text-slate-400 mt-2">
-            <span>VLM Success Rate:</span>
-            <span className="text-primary font-bold">94%</span>
+            <span>OCR Success Rate:</span>
+            <span className="text-primary font-bold">{getOcrSuccessRate()}%</span>
           </div>
         </div>
 
@@ -512,14 +586,14 @@ export default function Dashboard() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-xs uppercase font-mono font-bold text-slate-500 tracking-wider mb-1">Hardware Engine</p>
-              <h3 className="text-lg font-bold text-white leading-none font-sans">RTX 4090 Edge</h3>
+              <h3 className="text-lg font-bold text-white leading-none font-sans">RTX 4090 [spec]</h3>
             </div>
             <HardDrive className="w-6 h-6 text-primary group-hover:pulse transition-transform" />
           </div>
           <div className="w-full mt-2">
             <div className="flex justify-between text-[10px] font-mono text-slate-400 mb-1">
               <span>VRAM Alloc:</span>
-              <span className={gpuUsage < 60 ? 'text-primary' : gpuUsage <= 85 ? 'text-warning' : 'text-destructive'}>6.2/8 GB ({gpuUsage}%)</span>
+              <span className={gpuUsage < 60 ? 'text-primary' : gpuUsage <= 85 ? 'text-warning' : 'text-destructive'}>{vram.used}/{vram.total} GB ({gpuUsage}%)</span>
             </div>
             <div className="w-full bg-slate-900 border border-slate-800/80 rounded-full h-1.5">
               <div className={`bg-gradient-to-r ${getGpuColor(gpuUsage)} h-1.5 rounded-full`} style={{ width: `${gpuUsage}%` }}></div>
@@ -838,7 +912,7 @@ export default function Dashboard() {
             <h3 className="text-xl font-semibold text-white">Recent Activity</h3>
           </div>
           <div className="space-y-4">
-            {recentActivity.map((activity) => (
+            {getRecentActivity().map((activity) => (
               <div
                 key={activity.id}
                 className="flex items-center justify-between py-3 border-b border-slate-800 last:border-0"
@@ -884,7 +958,7 @@ export default function Dashboard() {
               <div className="flex justify-between mb-2">
                 <span className="text-slate-400">GPU Hardware Memory</span>
                 <span className={gpuUsage < 60 ? 'text-primary' : gpuUsage <= 85 ? 'text-warning' : 'text-destructive'}>
-                  6.2 / 8 GB ({gpuUsage}%)
+                  {vram.used} / {vram.total} GB ({gpuUsage}%)
                 </span>
               </div>
               <div className="w-full bg-slate-900 border border-slate-800 rounded-full h-2">

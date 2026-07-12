@@ -71,11 +71,11 @@ export default function FewShotLearning() {
                   value={newObjectName}
                   onChange={(e) => setNewObjectName(e.target.value)}
                   placeholder="e.g., Custom Badge, Specific Tool"
-                  className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-[#DC143C]"
+                  className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary"
                 />
               </div>
 
-              <div className="mb-6 flex justify-between items-center p-3 rounded-lg border border-[#00D4FF]/30 bg-[#00D4FF]/5">
+              <div className="mb-6 flex justify-between items-center p-3 rounded-lg border border-primary/30 bg-primary/5">
                 <div>
                   <h4 className="text-white text-sm font-semibold flex items-center gap-2">
                     <Sparkles className="w-4 h-4 text-[#00D4FF]" /> AI-Assisted Annotation
@@ -84,7 +84,7 @@ export default function FewShotLearning() {
                 </div>
                 <button
                   onClick={() => setAutoLabel(!autoLabel)}
-                  className={`w-11 h-6 rounded-full transition-colors relative ${autoLabel ? 'bg-[#00D4FF]' : 'bg-gray-600'}`}
+                  className={`w-11 h-6 rounded-full transition-colors relative ${autoLabel ? 'bg-primary' : 'bg-gray-600'}`}
                 >
                   <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${autoLabel ? 'translate-x-5' : 'translate-x-0'}`} />
                 </button>
@@ -96,7 +96,7 @@ export default function FewShotLearning() {
                   {[1, 2, 3, 4, 5].map((num) => (
                     <div
                       key={num}
-                      className="aspect-square border-2 border-dashed border-[rgba(220,20,60,0.3)] rounded-lg flex items-center justify-center hover:border-[#DC143C] transition-colors cursor-pointer bg-black/20"
+                      className="aspect-square border-2 border-dashed border-border rounded-lg flex items-center justify-center hover:border-[#DC143C] transition-colors cursor-pointer bg-black/20"
                     >
                       <div className="text-center">
                         <Upload className="w-5 h-5 text-gray-500 mx-auto mb-1" />
@@ -188,7 +188,7 @@ export default function FewShotLearning() {
               </div>
 
               <div className="flex gap-4">
-                <div className="w-10 h-10 rounded-full bg-[rgba(157,78,221,0.2)] flex items-center justify-center flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                   <span className="text-[#9D4EDD] font-bold">3</span>
                 </div>
                 <div>
@@ -214,7 +214,7 @@ export default function FewShotLearning() {
                 <select 
                   value={baseModel}
                   onChange={(e) => setBaseModel(e.target.value)}
-                  className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#DC143C]"
+                  className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary"
                 >
                   <option className="bg-black text-white" value="groundingdino">Grounding DINO (Precision)</option>
                   <option className="bg-black text-white" value="sam3">SAM 3 (Instance Segmentation)</option>
@@ -224,7 +224,7 @@ export default function FewShotLearning() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-2">Confidence Threshold</label>
-                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#DC143C]" defaultValue="0.50">
+                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-4 py-2 text-white focus:outline-none focus:border-primary" defaultValue="0.50">
                   <option className="bg-black text-white" value="0.25">0.25 (Low)</option>
                   <option className="bg-black text-white" value="0.50">0.50 (Balanced)</option>
                   <option className="bg-black text-white" value="0.75">0.75 (Strict)</option>
@@ -233,7 +233,7 @@ export default function FewShotLearning() {
 
               <div>
                 <label className="block text-sm text-gray-400 mb-1.5">IoU Threshold</label>
-                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#DC143C]" defaultValue="0.50">
+                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-primary" defaultValue="0.50">
                   <option className="bg-black text-white" value="0.45">0.45</option>
                   <option className="bg-black text-white" value="0.50">0.50 (Standard)</option>
                   <option className="bg-black text-white" value="0.60">0.60 (Strict)</option>
@@ -243,7 +243,7 @@ export default function FewShotLearning() {
               <div className="pt-3 mt-4 border-t border-[rgba(255,255,255,0.1)]">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-400">Expected VRAM Impact</span>
-                  <span className="text-xs font-mono text-[#FFD60A] bg-[#FFD60A]/10 px-2 py-1 rounded border border-[#FFD60A]/20">
+                  <span className="text-xs font-mono text-[#FFD60A] bg-warning/10 px-2 py-1 rounded border border-warning/20">
                     {baseModel === 'groundingdino' ? '+1.2 GB' : baseModel === 'sam3' ? '+2.4 GB' : '+3.1 GB'}
                   </span>
                 </div>
@@ -252,14 +252,14 @@ export default function FewShotLearning() {
           </div>
 
           {/* Learned Objects List */}
-          <div className="premium-card p-5 overflow-y-auto" style={{ maxHeight: '60vh', scrollbarWidth: 'thin', scrollbarColor: 'rgba(220,20,60,0.6) transparent' }}>
+          <div className="premium-card p-5 overflow-y-auto" style={{ maxHeight: '60vh', scrollbarWidth: 'thin', scrollbarColor: 'rgba(6,182,212,0.5) transparent' }}>
             <h3 className="text-lg font-semibold text-white mb-3">Custom Objects</h3>
             
             <div className="space-y-3">
               {learnedObjects.map((obj) => (
                 <div
                   key={obj.id}
-                  className="p-4 rounded-lg bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)]"
+                  className="p-4 rounded-lg bg-[rgba(255,255,255,0.05)] border border-border"
                 >
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
@@ -302,10 +302,10 @@ export default function FewShotLearning() {
                   <div className="flex gap-2 mt-3 pt-3 border-t border-[rgba(255,255,255,0.1)]">
                     {obj.trained ? (
                       <>
-                        <button className="flex-1 text-xs py-2 px-3 rounded bg-[rgba(57,255,20,0.1)] text-[#39FF14] border border-[#39FF14]/30 hover:bg-[rgba(57,255,20,0.2)]">
+                        <button className="flex-1 text-xs py-2 px-3 rounded bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20">
                           Use Model
                         </button>
-                        <button className="flex-1 text-xs py-2 px-3 rounded bg-[rgba(255,255,255,0.05)] text-gray-300 border border-[rgba(220,20,60,0.3)]">
+                        <button className="flex-1 text-xs py-2 px-3 rounded bg-[rgba(255,255,255,0.05)] text-gray-300 border border-border">
                           Retrain
                         </button>
                       </>
@@ -325,17 +325,17 @@ export default function FewShotLearning() {
       {/* Restored Statistics at the very bottom */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4 shrink-0 pb-2">
         <div className="premium-card p-4 text-center">
-          <p className="text-3xl font-bold text-[#00D4FF] mb-1" style={{ textShadow: '0 0 15px rgba(0,212,255,0.5)' }}>{learnedObjects.length}</p>
+          <p className="text-3xl font-bold text-[#00D4FF] mb-1" style={{ textShadow: '0 0 15px rgba(6,182,212,0.4)' }}>{learnedObjects.length}</p>
           <p className="text-xs text-gray-400 uppercase tracking-wider">Total Custom Objects</p>
         </div>
         <div className="premium-card p-4 text-center">
-          <p className="text-3xl font-bold text-[#39FF14] mb-1" style={{ textShadow: '0 0 15px rgba(57,255,20,0.5)' }}>
+          <p className="text-3xl font-bold text-[#39FF14] mb-1" style={{ textShadow: '0 0 15px rgba(6,182,212,0.4)' }}>
             {learnedObjects.filter(o => o.trained).length}
           </p>
           <p className="text-xs text-gray-400 uppercase tracking-wider">Active Trained Models</p>
         </div>
         <div className="premium-card p-4 text-center">
-          <p className="text-3xl font-bold text-[#DC143C] mb-1" style={{ textShadow: '0 0 15px rgba(220,20,60,0.5)' }}>
+          <p className="text-3xl font-bold text-[#DC143C] mb-1" style={{ textShadow: '0 0 15px rgba(6,182,212,0.4)' }}>
             {Math.round(learnedObjects.filter(o => o.trained).reduce((acc, o) => acc + o.accuracy, 0) / (learnedObjects.filter(o => o.trained).length || 1))}%
           </p>
           <p className="text-xs text-gray-400 uppercase tracking-wider">Average Model Accuracy</p>

@@ -95,4 +95,13 @@ class RedisCache:
         except Exception as e:
             logger.warning(f"Redis error setting static cache: {e}")
 
+    def clear(self):
+        self.mem_client.clear()
+        if self.available:
+            try:
+                self.client.flushdb()
+                logger.info("Redis cache cleared successfully")
+            except Exception as e:
+                logger.error(f"Failed to clear Redis database: {e}")
+
 cache = RedisCache()

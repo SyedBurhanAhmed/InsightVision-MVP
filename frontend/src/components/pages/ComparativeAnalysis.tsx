@@ -10,6 +10,7 @@ type LocalizerBenchmark = {
   vram_mb: number;
   box_quality: string;
   ocr_success_rate: number;
+  detection_iou: number;
   sample_bbox: [number, number, number, number];
 };
 
@@ -53,53 +54,55 @@ const fallbackBenchmarkData: BenchmarkData = {
   localizer_comparison: {
     grounding_dino: {
       name: "Grounding DINO (Swin-T)",
-      cold_lock_on_latency_ms: 752.5,
-      vram_mb: 1800.0,
-      box_quality: "Generates wider, less precise bounding boxes for specific query phrases. Can miss small text boundaries.",
+      cold_lock_on_latency_ms: 0.0,
+      vram_mb: 0.0,
+      box_quality: "No data loaded",
       ocr_success_rate: 0.0,
-      sample_bbox: [320, 160, 240, 220]
+      detection_iou: 0.0,
+      sample_bbox: [0, 0, 0, 0]
     },
     sam3: {
       name: "SAM 3 (Prompt Processor)",
-      cold_lock_on_latency_ms: 138.3,
-      vram_mb: 2200.0,
-      box_quality: "Highly precise instance-level pixel alignment. Captures detailed target boundaries cleanly, eliminating background clutter.",
-      ocr_success_rate: 100.0,
-      sample_bbox: [410, 210, 120, 150]
+      cold_lock_on_latency_ms: 0.0,
+      vram_mb: 0.0,
+      box_quality: "No data loaded",
+      ocr_success_rate: 0.0,
+      detection_iou: 0.0,
+      sample_bbox: [0, 0, 0, 0]
     }
   },
   tracker_comparison: {
     boxmot_botsort: {
       name: "Grounding DINO + BoxMOT (BoT-SORT)",
-      speed_fps: 7.7,
-      latency_ms: 130.0,
-      robustness: "Highly robust to visual occlusions and motion noise. Retains a stable tracking ID over time. Purely motion-based association.",
-      id_consistency_score: 95.0
+      speed_fps: 0.0,
+      latency_ms: 0.0,
+      robustness: "No data loaded",
+      id_consistency_score: 0.0
     },
     sam3_native: {
       name: "SAM 3 Native Single-Shot Tracking",
-      speed_fps: 6.4,
-      latency_ms: 156.0,
-      robustness: "Adapts naturally to appearance variations by executing prompt-grounding per frame, but lacks historical track association (loses ID on occlusion).",
-      id_consistency_score: 60.0
+      speed_fps: 0.0,
+      latency_ms: 0.0,
+      robustness: "No data loaded",
+      id_consistency_score: 0.0
     }
   },
   pipeline_stages_latency_ms: {
-    localize: { label: "Localizer Lock-on", dino: 752.5, sam3: 138.3 },
-    track: { label: "Per-frame Tracking", dino: 130.0, sam3: 156.0 },
-    segment: { label: "SAM 3 Segmentation", dino: 206.0, sam3: 206.0 },
-    ocr: { label: "Gemma 4 VLM OCR Pass", dino: 442.6, sam3: 442.6 },
-    describe: { label: "Gemma 4 VLM Description", dino: 2500.0, sam3: 2500.0 }
+    localize: { label: "Localizer Lock-on", dino: 0.0, sam3: 0.0 },
+    track: { label: "Per-frame Tracking", dino: 0.0, sam3: 0.0 },
+    segment: { label: "SAM 3 Segmentation", dino: 0.0, sam3: 0.0 },
+    ocr: { label: "Gemma 4 VLM OCR Pass", dino: 0.0, sam3: 0.0 },
+    describe: { label: "Gemma 4 VLM Description", dino: 0.0, sam3: 0.0 }
   },
   vram_diagnostics: {
-    dino_sam3_idle: 4000.0,
-    unified_pipeline_active_peak: 11500.0,
+    dino_sam3_idle: 0.0,
+    unified_pipeline_active_peak: 0.0,
     hardware_limit: 16000.0
   },
   sample_target: {
-    image_url: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&q=80&w=800",
-    ground_truth_bbox: [410, 210, 120, 150],
-    description: "OCR Signboard Target (FYP Lab Environment)"
+    image_url: "",
+    ground_truth_bbox: [0, 0, 0, 0],
+    description: "No target loaded"
   }
 };
 
@@ -384,7 +387,7 @@ export default function ComparativeAnalysis() {
                     <strong className="text-white">Continuous Tracking Speed:</strong> InsightVision separates the tracking-only spatial loop (Hungarian filter matching at 7.7 FPS) from the heavier visual-language reasoning step to preserve performance.
                   </li>
                   <li className="leading-relaxed text-gray-400">
-                    <strong className="text-white">Hardware Requirement:</strong> Typical large-VLM setups require expensive multi-GPU arrays or at least 24GB+ of dedicated VRAM. InsightVision leverages a hybrid local pipeline to deliver full segmenting, localizing, and reasoning capabilities on a single consumer GPU, peaking at ~11.5 GB VRAM.
+                    <strong className="text-white">Hardware Requirement:</strong> Typical large-VLM setups require expensive multi-GPU arrays or at least 24GB+ of dedicated VRAM. InsightVision leverages a hybrid local pipeline to deliver full segmenting, localizing, and reasoning capabilities on a single consumer GPU, peaking at ~{vramPeakGB} GB VRAM.
                   </li>
                 </ul>
               </div>
@@ -474,8 +477,8 @@ export default function ComparativeAnalysis() {
                   <span className="text-[#FF0055] font-semibold">DINO Result:</span>
                 )}{' '}
                 {activeTab === 'sam3' 
-                  ? "Bounding box perfectly matches target bounds, allowing downstream Gemma 4 VLM reader to process text correctly (100% OCR Accuracy)."
-                  : "Bounding box contains excessive background clutter, diluting model focus and causing the VLM reader to fail (0% OCR Accuracy)."
+                  ? `Bounding box perfectly matches target bounds, allowing downstream Gemma 4 VLM reader to process text correctly (${data.localizer_comparison.sam3.ocr_success_rate}% OCR Accuracy).`
+                  : `Bounding box contains excessive background clutter, diluting model focus and causing the VLM reader to fail (${data.localizer_comparison.grounding_dino.ocr_success_rate}% OCR Accuracy).`
                 }
               </div>
             </div>
@@ -594,8 +597,8 @@ export default function ComparativeAnalysis() {
                 </tr>
                 <tr>
                   <td className="py-4 font-medium text-white">Text-Grounding Accuracy</td>
-                  <td className="py-4 text-red-500 font-semibold">Low (0% OCR rate)</td>
-                  <td className="py-4 text-[#39FF14] font-semibold">Exceptional (100% OCR rate)</td>
+                  <td className="py-4 text-red-500 font-semibold">Low ({data.localizer_comparison.grounding_dino.ocr_success_rate}% OCR rate)</td>
+                  <td className="py-4 text-[#39FF14] font-semibold">Exceptional ({data.localizer_comparison.sam3.ocr_success_rate}% OCR rate)</td>
                 </tr>
                 <tr>
                   <td className="py-4 font-medium text-white">Segmentation Mode</td>

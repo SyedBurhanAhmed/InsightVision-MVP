@@ -187,7 +187,7 @@ export default function ObjectTracking() {
                   onClick={() => setShowPaths(!showPaths)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     showPaths
-                      ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]'
+                      ? 'bg-primary/20 text-primary border border-primary'
                       : 'bg-[rgba(255,255,255,0.05)] text-gray-400 border border-transparent'
                   }`}
                 >
@@ -197,7 +197,7 @@ export default function ObjectTracking() {
                   onClick={() => setShowIds(!showIds)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     showIds
-                      ? 'bg-[#00D4FF]/20 text-[#00D4FF] border border-[#00D4FF]'
+                      ? 'bg-primary/20 text-primary border border-primary'
                       : 'bg-[rgba(255,255,255,0.05)] text-gray-400 border border-transparent'
                   }`}
                 >
@@ -248,7 +248,7 @@ export default function ObjectTracking() {
               <select
                 value={trackingAlgorithm}
                 onChange={(e) => setTrackingAlgorithm(e.target.value)}
-                className="w-full appearance-none bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-[#DC143C] pr-10 cursor-pointer"
+                className="w-full appearance-none bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-4 py-2.5 text-white focus:outline-none focus:border-primary pr-10 cursor-pointer"
               >
                 <option className="bg-black text-white" value="bytetrack">ByteTrack</option>
                 <option className="bg-black text-white" value="deepsort">DeepSORT</option>
@@ -270,7 +270,7 @@ export default function ObjectTracking() {
               onChange={(e) => setVlmPrompt(e.target.value)}
               placeholder="Describe object to track (e.g., 'person in red shirt')..."
               rows={3}
-              className="w-full rounded-lg px-4 py-3 text-white placeholder-[#3a3a3a] text-sm focus:outline-none focus:ring-1 focus:ring-[#DC143C]/60 resize-none leading-relaxed"
+              className="w-full rounded-lg px-4 py-3 text-white placeholder-[#3a3a3a] text-sm focus:outline-none focus:ring-1 focus:ring-primary/60 resize-none leading-relaxed"
               style={{ backgroundColor: '#111111', border: '1px solid #252525' }}
             />
 
@@ -279,14 +279,14 @@ export default function ObjectTracking() {
               className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-white transition-all duration-200 hover:opacity-90 active:scale-[0.98]"
               style={{
                 background: trackInitiated
-                  ? 'linear-gradient(135deg, #39FF14, #1a8c00)'
-                  : 'linear-gradient(135deg, #DC143C, #8B0000)',
+                  ? 'linear-gradient(135deg, var(--primary), #0891B2)'
+                  : 'linear-gradient(135deg, var(--destructive), #B91C1C)',
                 border: trackInitiated
                   ? '1px solid rgba(57,255,20,0.4)'
-                  : '1px solid rgba(220,20,60,0.4)',
+                  : '1px solid rgba(239,68,68,0.4)',
                 boxShadow: trackInitiated
                   ? '0 0 18px rgba(57,255,20,0.35)'
-                  : '0 0 18px rgba(220,20,60,0.35)',
+                  : '0 0 18px rgba(239,68,68,0.3)',
               }}
             >
               <Crosshair className="w-4 h-4" />
@@ -295,7 +295,7 @@ export default function ObjectTracking() {
 
             {/* Active prompt feedback */}
             {activePrompt && (
-              <div className="mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(220,20,60,0.08)', border: '1px solid rgba(220,20,60,0.2)' }}>
+              <div className="mt-3 px-3 py-2 rounded-lg text-xs" style={{ backgroundColor: 'rgba(6,182,212,0.06)', border: '1px solid rgba(6,182,212,0.2)' }}>
                 <span className="text-gray-400">Tracking: </span>
                 <span className="text-[#DC143C]">"{activePrompt}"</span>
               </div>
@@ -311,25 +311,25 @@ export default function ObjectTracking() {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-sm text-gray-400">Min Confidence</label>
-                  <span className="text-xs font-mono bg-[#DC143C]/20 text-[#DC143C] px-2 py-0.5 rounded border border-[#DC143C]/30">{(minConfidence * 100).toFixed(0)}%</span>
+                  <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30">{(minConfidence * 100).toFixed(0)}%</span>
                 </div>
-                <input type="range" min="0" max="1" step="0.05" value={minConfidence} onChange={(e) => setMinConfidence(parseFloat(e.target.value))} className="w-full accent-[#DC143C]" />
+                <input type="range" min="0" max="1" step="0.05" value={minConfidence} onChange={(e) => setMinConfidence(parseFloat(e.target.value))} className="w-full accent-primary" />
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-sm text-gray-400">Re-ID Threshold</label>
-                  <span className="text-xs font-mono bg-[#DC143C]/20 text-[#DC143C] px-2 py-0.5 rounded border border-[#DC143C]/30">{reIdThreshold.toFixed(2)}</span>
+                  <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30">{reIdThreshold.toFixed(2)}</span>
                 </div>
-                <input type="range" min="0" max="1" step="0.05" value={reIdThreshold} onChange={(e) => setReIdThreshold(parseFloat(e.target.value))} className="w-full accent-[#DC143C]" />
+                <input type="range" min="0" max="1" step="0.05" value={reIdThreshold} onChange={(e) => setReIdThreshold(parseFloat(e.target.value))} className="w-full accent-primary" />
               </div>
 
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <label className="text-sm text-gray-400">Lost Track Timeout</label>
-                  <span className="text-xs font-mono bg-[#DC143C]/20 text-[#DC143C] px-2 py-0.5 rounded border border-[#DC143C]/30">{lostTrackTimeout} frames</span>
+                  <span className="text-xs font-mono bg-primary/20 text-primary px-2 py-0.5 rounded border border-primary/30">{lostTrackTimeout} frames</span>
                 </div>
-                <input type="range" min="10" max="120" step="5" value={lostTrackTimeout} onChange={(e) => setLostTrackTimeout(parseInt(e.target.value))} className="w-full accent-[#DC143C]" />
+                <input type="range" min="10" max="120" step="5" value={lostTrackTimeout} onChange={(e) => setLostTrackTimeout(parseInt(e.target.value))} className="w-full accent-primary" />
               </div>
             </div>
           </div>
@@ -340,7 +340,7 @@ export default function ObjectTracking() {
             style={{ 
               height: 'calc(100vh - 200px)',
               scrollbarWidth: 'thin', 
-              scrollbarColor: '#DC143C transparent' 
+              scrollbarColor: 'rgba(6,182,212,0.5) transparent' 
             }}
           >
             <h3 className="text-xl font-semibold text-white mb-4">Tracked Objects</h3>
@@ -350,7 +350,7 @@ export default function ObjectTracking() {
                   key={obj.id}
                   className={`p-4 rounded-lg border transition-all ${
                     obj.status === 'Active'
-                      ? 'bg-[rgba(255,255,255,0.05)] border-[rgba(220,20,60,0.3)]'
+                      ? 'bg-[rgba(255,255,255,0.05)] border-border'
                       : 'bg-[rgba(0,0,0,0.3)] border-gray-800 opacity-60'
                   }`}
                 >

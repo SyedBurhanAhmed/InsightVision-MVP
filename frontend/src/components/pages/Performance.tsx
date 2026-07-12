@@ -10,6 +10,7 @@ type LocalizerBenchmark = {
   vram_mb: number;
   box_quality: string;
   ocr_success_rate: number;
+  detection_iou: number;
   sample_bbox: [number, number, number, number];
 };
 
@@ -53,73 +54,55 @@ const fallbackBenchmarkData: BenchmarkData = {
   localizer_comparison: {
     grounding_dino: {
       name: "Grounding DINO (Swin-T)",
-      cold_lock_on_latency_ms: 752.5,
-      vram_mb: 1800.0,
-      box_quality: "Generates wider, less precise bounding boxes for specific query phrases. Can miss small text boundaries.",
+      cold_lock_on_latency_ms: 0.0,
+      vram_mb: 0.0,
+      box_quality: "No data loaded",
       ocr_success_rate: 0.0,
-      sample_bbox: [702.6, 344.1, 165.4, 365.1]
+      detection_iou: 0.0,
+      sample_bbox: [0, 0, 0, 0]
     },
     sam3: {
       name: "SAM 3 (Prompt Processor)",
-      cold_lock_on_latency_ms: 138.3,
-      vram_mb: 2200.0,
-      box_quality: "Provides highly precise instance-level pixel alignment. Captures detailed target boundaries cleanly, yielding higher downstream VLM confidence.",
-      ocr_success_rate: 100.0,
-      sample_bbox: [453.5, 363.8, 104.8, 274.0]
+      cold_lock_on_latency_ms: 0.0,
+      vram_mb: 0.0,
+      box_quality: "No data loaded",
+      ocr_success_rate: 0.0,
+      detection_iou: 0.0,
+      sample_bbox: [0, 0, 0, 0]
     }
   },
   tracker_comparison: {
     boxmot_botsort: {
       name: "Grounding DINO + BoxMOT (BoT-SORT)",
-      speed_fps: 7.7,
-      latency_ms: 130.0,
-      robustness: "Highly robust to brief visual occlusions, target motion noise, and camera jitter. Retains a stable track_id over time.",
-      id_consistency_score: 95.0
+      speed_fps: 0.0,
+      latency_ms: 0.0,
+      robustness: "No data loaded",
+      id_consistency_score: 0.0
     },
     sam3_native: {
       name: "SAM 3 Native Single-Shot Tracking",
-      speed_fps: 6.4,
-      latency_ms: 156.0,
-      robustness: "Naturally adapts to major changes in target appearance since the text prompt is evaluated on every frame. No cross-frame track association.",
-      id_consistency_score: 60.0
+      speed_fps: 0.0,
+      latency_ms: 0.0,
+      robustness: "No data loaded",
+      id_consistency_score: 0.0
     }
   },
   pipeline_stages_latency_ms: {
-    localize: {
-      label: "Localizer Lock-on",
-      dino: 752.5,
-      sam3: 138.3
-    },
-    track: {
-      label: "Per-frame Tracking",
-      dino: 130.0,
-      sam3: 156.0
-    },
-    segment: {
-      label: "SAM 3 Segmentation",
-      dino: 206.0,
-      sam3: 206.0
-    },
-    ocr: {
-      label: "Gemma 4 VLM OCR Pass",
-      dino: 442.6,
-      sam3: 442.6
-    },
-    describe: {
-      label: "Gemma 4 VLM Description",
-      dino: 2500.0,
-      sam3: 2500.0
-    }
+    localize: { label: "Localizer Lock-on", dino: 0.0, sam3: 0.0 },
+    track: { label: "Per-frame Tracking", dino: 0.0, sam3: 0.0 },
+    segment: { label: "SAM 3 Segmentation", dino: 0.0, sam3: 0.0 },
+    ocr: { label: "Gemma 4 VLM OCR Pass", dino: 0.0, sam3: 0.0 },
+    describe: { label: "Gemma 4 VLM Description", dino: 0.0, sam3: 0.0 }
   },
   vram_diagnostics: {
-    dino_sam3_idle: 4000.0,
-    unified_pipeline_active_peak: 11500.0,
+    dino_sam3_idle: 0.0,
+    unified_pipeline_active_peak: 0.0,
     hardware_limit: 16000.0
   },
   sample_target: {
-    image_url: "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&q=80&w=800",
-    ground_truth_bbox: [453.5, 363.8, 104.8, 274.0],
-    description: "OCR Signboard Target (FYP Lab Environment)"
+    image_url: "",
+    ground_truth_bbox: [0, 0, 0, 0],
+    description: "No target loaded"
   }
 };
 
@@ -235,7 +218,7 @@ export default function Performance() {
           <p className="text-sm text-gray-400 mb-1">Total GPU VRAM Ceiling</p>
           <div className="w-full bg-[rgba(255,255,255,0.1)] rounded-full h-1.5 mt-2">
             <div 
-              className="bg-gradient-to-r from-[#9D4EDD] to-[#00FFFF] h-1.5 rounded-full" 
+              className="bg-gradient-to-r from-primary to-primary/60 h-1.5 rounded-full" 
               style={{ width: '100%' }}
             ></div>
           </div>
@@ -264,7 +247,7 @@ export default function Performance() {
               />
               <Legend wrapperStyle={{ fontSize: '12px' }} />
               <Bar dataKey="DINO Config (ms)" fill="#FF0055" radius={[4, 4, 0, 0]} />
-              <Bar dataKey="SAM3 Config (ms)" fill="#00D4FF" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="SAM3 Config (ms)" fill="var(--primary)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -294,7 +277,7 @@ export default function Performance() {
                   <span className="font-bold text-[#00D4FF]">{Math.round(sam3TotalLatency)} ms total</span>
                 </div>
                 <div className="w-full bg-gray-800 h-2 rounded-full overflow-hidden">
-                  <div className="bg-[#00D4FF] h-full" style={{ width: `${(sam3TotalLatency / dinoTotalLatency) * 100}%` }} />
+                  <div className="bg-primary h-full" style={{ width: `${(sam3TotalLatency / dinoTotalLatency) * 100}%` }} />
                 </div>
               </div>
             </div>
@@ -314,19 +297,19 @@ export default function Performance() {
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>Grounding DINO</span>
-                <span className="font-bold text-white">85% IoU</span>
+                <span className="font-bold text-white">{data.localizer_comparison.grounding_dino.detection_iou}% IoU</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-[#FF0055] h-2 rounded-full" style={{ width: '85%' }}></div>
+                <div className="bg-[#FF0055] h-2 rounded-full" style={{ width: `${data.localizer_comparison.grounding_dino.detection_iou}%` }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>SAM 3</span>
-                <span className="font-bold text-[#39FF14]">92% IoU</span>
+                <span className="font-bold text-[#39FF14]">{data.localizer_comparison.sam3.detection_iou}% IoU</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-[#39FF14] h-2 rounded-full" style={{ width: '92%' }}></div>
+                <div className="bg-primary h-2 rounded-full" style={{ width: `${data.localizer_comparison.sam3.detection_iou}%` }}></div>
               </div>
             </div>
           </div>
@@ -338,19 +321,19 @@ export default function Performance() {
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>Grounding DINO</span>
-                <span className="font-bold text-red-500">0% Success</span>
+                <span className="font-bold text-red-500">{data.localizer_comparison.grounding_dino.ocr_success_rate}% Success</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-red-500 h-2 rounded-full" style={{ width: '0%' }}></div>
+                <div className="bg-red-500 h-2 rounded-full" style={{ width: `${data.localizer_comparison.grounding_dino.ocr_success_rate}%` }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>SAM 3</span>
-                <span className="font-bold text-[#39FF14]">100% Success</span>
+                <span className="font-bold text-[#39FF14]">{data.localizer_comparison.sam3.ocr_success_rate}% Success</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-[#39FF14] h-2 rounded-full" style={{ width: '100%' }}></div>
+                <div className="bg-primary h-2 rounded-full" style={{ width: `${data.localizer_comparison.sam3.ocr_success_rate}%` }}></div>
               </div>
             </div>
           </div>
@@ -362,19 +345,19 @@ export default function Performance() {
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>BoT-SORT Tracker</span>
-                <span className="font-bold text-[#39FF14]">95% Retention</span>
+                <span className="font-bold text-[#39FF14]">{data.tracker_comparison.boxmot_botsort.id_consistency_score}% Retention</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-[#39FF14] h-2 rounded-full" style={{ width: '95%' }}></div>
+                <div className="bg-primary h-2 rounded-full" style={{ width: `${data.tracker_comparison.boxmot_botsort.id_consistency_score}%` }}></div>
               </div>
             </div>
             <div>
               <div className="flex justify-between text-xs text-gray-400 mb-1">
                 <span>SAM 3 Native Single-Shot</span>
-                <span className="font-bold text-amber-500">60% Retention</span>
+                <span className="font-bold text-amber-500">{data.tracker_comparison.sam3_native.id_consistency_score}% Retention</span>
               </div>
               <div className="w-full bg-gray-800 h-2 rounded-full">
-                <div className="bg-amber-500 h-2 rounded-full" style={{ width: '60%' }}></div>
+                <div className="bg-amber-500 h-2 rounded-full" style={{ width: `${data.tracker_comparison.sam3_native.id_consistency_score}%` }}></div>
               </div>
             </div>
           </div>

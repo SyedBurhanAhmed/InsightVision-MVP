@@ -56,6 +56,19 @@ export default function LiveCamera() {
   const lastFrameTimeRef = useRef<number>(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Load default model config on mount
+  useEffect(() => {
+    const backendHost = window.location.hostname;
+    fetch(`http://${backendHost}:8000/api/config`)
+      .then((res) => res.json())
+      .then((cfg) => {
+        if (cfg && cfg.default_model) {
+          setLocalizer(cfg.default_model);
+        }
+      })
+      .catch((err) => console.warn("Failed to load settings config in LiveCamera:", err));
+  }, []);
+
   // Auto scroll to chat bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

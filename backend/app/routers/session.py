@@ -32,6 +32,7 @@ import asyncio
 import base64
 import logging
 import time
+import os
 import uuid
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Set
@@ -41,6 +42,7 @@ import numpy as np
 import torch
 from datetime import datetime
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from pydantic import BaseModel
 
 from app.core.state import ml_models
 from app.services.track_manager import TrackManager
@@ -82,6 +84,61 @@ def get_benchmark_results():
         with open(json_path, "r") as f:
             return json.load(f)
     return {"error": "Benchmark results file not found"}
+
+class ConfigPayload(BaseModel):
+    storage_location: str
+    default_model: str
+    tracking_algorithm: str
+    hardware_acceleration: bool
+    notifications: bool
+    auto_save: bool
+    cloud_provider: str
+    cloud_api_key: str
+
+@router.get("/api/config")
+def get_config():
+    import json
+    import os
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/config.json"))
+    default_config = {
+        "storage_location": os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs")),
+        "default_model": "grounding_dino",
+        "tracking_algorithm": "botsort",
+        "hardware_acceleration": True,
+        "notifications": True,
+        "auto_save": True,
+        "cloud_provider": "local",
+        "cloud_api_key": ""
+    }
+    if os.path.exists(config_path):
+        try:
+            with open(config_path, "r") as f:
+                user_cfg = json.load(f)
+                for k, v in user_cfg.items():
+                    default_config[k] = v
+        except Exception as e:
+            logger.error(f"Failed to read config.json: {e}")
+    return default_config
+
+@router.post("/api/config")
+def update_config(payload: ConfigPayload):
+    import json
+    import os
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/config.json"))
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    try:
+        with open(config_path, "w") as f:
+            json.dump(payload.model_dump(), f, indent=4)
+    except Exception as e:
+        logger.error(f"Failed to save config.json: {e}")
+        return {"status": "error", "message": str(e)}
+    return {"status": "ok", "message": "Config saved successfully"}
+
+@router.post("/api/cache/clear")
+def clear_cache():
+    from app.services.cache import cache
+    cache.clear()
+    return {"status": "ok", "message": "Cache cleared successfully"}
 
 
 # ── Adaptive re-detection thresholds ─────────────────────────────────────────
@@ -1141,6 +1198,18 @@ async def websocket_session(ws: WebSocket):
             if cap_fps > 0:
                 fps = cap_fps
 
+        # Load tracker configuration dynamically
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/config.json"))
+        tracking_method = "botsort"
+        if os.path.exists(config_path):
+            try:
+                import json
+                with open(config_path, "r") as f:
+                    cfg = json.load(f)
+                    tracking_method = cfg.get("tracking_algorithm", "botsort")
+            except Exception:
+                pass
+
         # ── Create session state and start sender ─────────────────────────
         out_q: asyncio.Queue = asyncio.Queue()
         state = SessionState(
@@ -1150,7 +1219,7 @@ async def websocket_session(ws: WebSocket):
             source=source,
             url=url,
             cap=cap,
-            track_manager=TrackManager(method="bytetrack", frame_rate=int(fps)),
+            track_manager=TrackManager(method=tracking_method, frame_rate=int(fps)),
             out_q=out_q,
             fps=fps,
             last_frame_t=0.0,

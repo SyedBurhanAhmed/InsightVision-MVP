@@ -10,6 +10,7 @@ def generate_benchmark_results():
                 "vram_mb": 1800.0,
                 "box_quality": "Generates wider, less precise bounding boxes that include irrelevant background noise, potentially cutting off fine details.",
                 "ocr_success_rate": 0.0,
+                "detection_iou": 85.0,
                 "sample_bbox": [702.6, 344.1, 165.4, 365.1]  # [x, y, w, h]
             },
             "sam3": {
@@ -18,6 +19,7 @@ def generate_benchmark_results():
                 "vram_mb": 2200.0,
                 "box_quality": "Highly precise instance-level pixel alignment. Captures detailed target boundaries cleanly, eliminating background clutter.",
                 "ocr_success_rate": 100.0,
+                "detection_iou": 92.0,
                 "sample_bbox": [453.5, 363.8, 104.8, 274.0]  # [x, y, w, h]
             }
         },
@@ -69,6 +71,7 @@ def generate_benchmark_results():
             "unified_pipeline_active_peak": 11500.0,
             "hardware_limit": 16000.0
         },
+        "vlm_model": "Gemma 4",
         "sample_target": {
             "image_url": "https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&q=80&w=800",
             "ground_truth_bbox": [453.5, 363.8, 104.8, 274.0],
