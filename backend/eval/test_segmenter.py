@@ -8,14 +8,14 @@ import numpy as np
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from app.services.track_manager import TrackManager
-from app.services.segmenter import SAM2Segmenter
+from app.services.segmenter import SAM3Segmenter
 
 def run_segmenter_test():
-    print("=== InsightVision SAM2 Segmenter Verification ===")
+    print("=== InsightVision SAM3 Segmenter Verification ===")
     
     # 1. Initialize services
     track_manager = TrackManager(method="botsort")
-    segmenter = SAM2Segmenter(model_path="sam2.1_t.pt")
+    segmenter = SAM3Segmenter()
     
     # 2. Load test image
     img_path = "images/ocr_check1.png"

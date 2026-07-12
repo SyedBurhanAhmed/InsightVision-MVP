@@ -38,7 +38,7 @@ const sampleQueries = [
 
 const vlmEngines = [
   { value: 'florence2', label: 'Florence-2' },
-  { value: 'yoloworld', label: 'YOLO-World' },
+  { value: 'sam3', label: 'SAM 3' },
   { value: 'qwenvl', label: 'Qwen2.5-VL' },
   { value: 'owlv2', label: 'OWLv2' },
 ];
@@ -197,7 +197,7 @@ export default function VisionLanguage() {
           </div>
         </div>
         <div className="premium-card p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(220,20,60,0.12)', border: '1px solid rgba(220,20,60,0.2)' }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
             <BarChart2 className="w-6 h-6 text-[#DC143C]" />
           </div>
           <div>
@@ -207,7 +207,7 @@ export default function VisionLanguage() {
           </div>
         </div>
         <div className="premium-card p-5 flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(157,78,221,0.12)', border: '1px solid rgba(157,78,221,0.2)' }}>
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)' }}>
             <Hash className="w-6 h-6 text-[#9D4EDD]" />
           </div>
           <div>
@@ -248,7 +248,7 @@ export default function VisionLanguage() {
                 <select
                   value={viewMode}
                   onChange={(e) => setViewMode(e.target.value)}
-                  className="w-full appearance-none bg-[rgba(255,255,255,0.05)] border border-[rgba(157,78,221,0.25)] rounded-lg pl-3 pr-8 py-1.5 text-white text-sm focus:outline-none focus:border-[#9D4EDD] cursor-pointer"
+                  className="w-full appearance-none bg-[rgba(255,255,255,0.05)] border border-border rounded-lg pl-3 pr-8 py-1.5 text-white text-sm focus:outline-none focus:border-primary cursor-pointer"
                 >
                   <option className="bg-black" value="annotated">Annotated</option>
                   <option className="bg-black" value="raw">Raw Feed</option>
@@ -322,7 +322,7 @@ export default function VisionLanguage() {
             </label>
             {/* Error display */}
             {apiError && (
-              <div className="mt-2 p-3 rounded-lg bg-[rgba(220,20,60,0.15)] border border-[#DC143C] text-[#DC143C] text-xs">
+              <div className="mt-2 p-3 rounded-lg bg-destructive/10 border border-destructive/40 text-destructive text-xs">
                 {apiError}
               </div>
             )}
@@ -363,7 +363,7 @@ export default function VisionLanguage() {
                 <Send className="w-5 h-5" />
               </button>
               <button 
-                className={`px-6 py-3 rounded-lg flex items-center justify-center transition-all ${isListening ? 'bg-[#DC143C]/20 border border-[#DC143C] text-[#DC143C] animate-pulse shadow-[0_0_15px_rgba(220,20,60,0.4)]' : 'btn-secondary text-gray-300'}`}
+                className={`px-6 py-3 rounded-lg flex items-center justify-center transition-all ${isListening ? 'bg-destructive/10 border border-destructive/40 text-destructive animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 'btn-secondary text-gray-300'}`}
                 onClick={() => setIsListening(!isListening)}
                 disabled={isProcessing}
                 title={isListening ? "Listening... Click to stop" : "Talk to Camera"}
@@ -414,7 +414,7 @@ export default function VisionLanguage() {
                 </button>
                 <span
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs shrink-0"
-                  style={{ background: 'rgba(57,255,20,0.08)', border: '1px solid rgba(57,255,20,0.2)', color: '#39FF14' }}
+                  style={{ background: 'rgba(6,182,212,0.08)', border: '1px solid rgba(6,182,212,0.2)', color: 'var(--primary)' }}
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-[#39FF14] animate-pulse inline-block" />
                   Live Output

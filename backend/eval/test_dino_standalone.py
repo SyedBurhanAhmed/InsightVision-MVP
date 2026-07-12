@@ -77,7 +77,7 @@ def run_dino_standalone():
     pil_img = Image.fromarray(img_rgb)
     image_tensor, _ = transform(pil_img, None)
     
-    prompt = "license plate"
+    prompt = "detect license plate"
     print(f"\nRunning GroundingDINO inference on prompt: '{prompt}'...")
     
     try:
@@ -91,12 +91,27 @@ def run_dino_standalone():
             device="cuda"
         )
         latency = (time.time() - t1) * 1000
+        # Save visual detection overlay
+        h_img, w_img, _ = img.shape
+        for i, box_norm in enumerate(boxes):
+            cx, cy, bw, bh = box_norm.tolist()
+            x1 = int((cx - bw / 2.0) * w_img)
+            y1 = int((cy - bh / 2.0) * h_img)
+            x2 = int((cx + bw / 2.0) * w_img)
+            y2 = int((cy + bh / 2.0) * h_img)
+            
+            # Draw green rectangle
+            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            # Draw text label
+            label = f"{phrases[i]} ({logits[i]:.2f})"
+            cv2.putText(img, label, (x1, y1 - 8),
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+        out_path = "outputs/dino_standalone_result.png"
+        os.makedirs("outputs", exist_ok=True)
+        cv2.imwrite(out_path, img)
+        print(f"  Saved visual result to: {out_path}")
         
-        print("Inference successful!")
-        print(f"  Detected phrases: {phrases}")
-        print(f"  Logits/scores: {logits.tolist()}")
-        print(f"  Boxes: {boxes.tolist()}")
-        print(f"  Latency: {latency:.1f}ms")
         print("\n" + "=" * 50)
         print("GroundingDINO is fully operational on GPU inside this environment!")
         print("=" * 50)

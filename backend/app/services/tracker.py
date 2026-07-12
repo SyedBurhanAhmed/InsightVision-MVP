@@ -29,11 +29,13 @@ class ConcreteTracker(TrackerBase):
             self.tracker = BotSort(
                 with_reid=False,
                 frame_rate=frame_rate,
+                track_buffer=60,
                 **kwargs
             )
         else:
             self.tracker = ByteTrack(
                 frame_rate=frame_rate,
+                track_buffer=60,
                 **kwargs
             )
 
@@ -56,8 +58,30 @@ class ConcreteTracker(TrackerBase):
             res = self.tracker.update(dets, img)
             
         if len(res) == 0:
-            return np.empty((0, 7), dtype=np.float32)
+            res_arr = np.empty((0, 7), dtype=np.float32)
+        else:
+            res_arr = np.array(res, dtype=np.float32)[:, :7]
             
-        arr = np.array(res, dtype=np.float32)
-        # Slice to return standard x1, y1, x2, y2, track_id, score, class_id
-        return arr[:, :7]
+        # BoxMOT drops unmatched tracks into lost_stracks. Since we rely on 
+        # Kalman filter propagation without running the heavy localizer per frame,
+        # we must extract the predicted bounding boxes of these lost tracks.
+        lost_rows = []
+        if hasattr(self.tracker, 'lost_stracks'):
+            for t in self.tracker.lost_stracks:
+                try:
+                    xyxy = t.xyxy
+                    track_id = getattr(t, 'id', getattr(t, 'track_id', 0))
+                    score = getattr(t, 'score', 0.0)
+                    cls = getattr(t, 'cls', 0)
+                    lost_rows.append([xyxy[0], xyxy[1], xyxy[2], xyxy[3], track_id, score, cls])
+                except Exception:
+                    pass
+                    
+        if lost_rows:
+            lost_arr = np.array(lost_rows, dtype=np.float32)
+            if res_arr.shape[0] == 0:
+                res_arr = lost_arr
+            else:
+                res_arr = np.vstack((res_arr, lost_arr))
+                
+        return res_arr

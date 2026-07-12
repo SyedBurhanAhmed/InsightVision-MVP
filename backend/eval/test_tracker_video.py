@@ -18,11 +18,13 @@ from groundingdino.util.inference import load_model
 logging.basicConfig(level=logging.ERROR)
 
 def process_video():
-    input_path = "images/long_output3.mp4"
-    output_path = "images/output/tracked_long_output3.mp4"
+    eval_dir = os.path.dirname(os.path.abspath(__file__))
+    project_root = os.path.abspath(os.path.join(eval_dir, "..", ".."))
+    input_path = os.path.join(project_root, "images", "insightvision_orange_vest_testing_video.mp4")
+    output_path = os.path.join(project_root, "images", "output", "checking_dino_tracking.mp4")
     max_frames = 500  # Process first 500 frames (~20 seconds) for quick verification
     detect_confidence = 0.4
-    prompt = "person" # Generic prompt suitable for lab camera
+    prompt = "person wearing orange vest" # Generic prompt suitable for lab camera
 
     print(f"=== InsightVision Video Tracking Test ===")
     print(f"Input: {input_path}")

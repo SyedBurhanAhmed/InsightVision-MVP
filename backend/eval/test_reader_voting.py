@@ -69,6 +69,35 @@ def run_reader_voting_test():
     print(f"Inference Latency:    {latency:.1f}ms")
     print("=" * 50)
     
+    # Save visual crop of the license plate with winning OCR text overlayed
+    if session_id in track_manager.history_buffers:
+        found_crop = False
+        for last_item in reversed(track_manager.history_buffers[session_id]):
+            for t in last_item["tracks"]:
+                if t["track_id"] == track_id:
+                    bx, by, bw, bh = t["bbox"]
+                    tx1, ty1, tx2, ty2 = int(bx), int(by), int(bx + bw), int(by + bh)
+                    
+                    last_frame = last_item["frame"]
+                    h_f, w_f = last_frame.shape[:2]
+                    pad = 20
+                    cy1, cy2 = max(0, ty1 - pad), min(h_f, ty2 + pad)
+                    cx1, cx2 = max(0, tx1 - pad), min(w_f, tx2 + pad)
+                    crop = last_frame[cy1:cy2, cx1:cx2].copy()
+                    
+                    # Draw text tag
+                    cv2.putText(crop, f"Voting OCR: {vote_res['text']}", (10, 25),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                                
+                    out_path = "outputs/voting_ocr_result.png"
+                    os.makedirs("outputs", exist_ok=True)
+                    cv2.imwrite(out_path, crop)
+                    print(f"✔ Saved visual OCR voting crop to: {out_path}")
+                    found_crop = True
+                    break
+            if found_crop:
+                break
+                
     # Cleanup session
     track_manager.clear_session(session_id)
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Target, Sliders, Eye, EyeOff, Plus, Sparkles, Copy, Download } from 'lucide-react';
+import { Target, Sliders, Eye, EyeOff, Plus, Sparkles, Download } from 'lucide-react';
 
 const objectClasses = [
   { id: 1, name: 'Person', count: 3, enabled: true, color: '#FF0040' },
@@ -282,7 +282,7 @@ export default function ObjectDetection() {
                   onClick={() => setShowBoundingBoxes(!showBoundingBoxes)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     showBoundingBoxes
-                      ? 'bg-[#00D4FF]/20 text-[#00D4FF] border border-[#00D4FF]'
+                      ? 'bg-primary/20 text-primary border border-primary'
                       : 'bg-[rgba(255,255,255,0.05)] text-gray-400 border border-transparent'
                   }`}
                 >
@@ -292,7 +292,7 @@ export default function ObjectDetection() {
                   onClick={() => setShowLabels(!showLabels)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     showLabels
-                      ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]'
+                      ? 'bg-primary/20 text-primary border border-primary'
                       : 'bg-[rgba(255,255,255,0.05)] text-gray-400 border border-transparent'
                   }`}
                 >
@@ -302,7 +302,7 @@ export default function ObjectDetection() {
                   onClick={() => setShowMasks(!showMasks)}
                   className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
                     showMasks
-                      ? 'bg-[#9D4EDD]/20 text-[#9D4EDD] border border-[#9D4EDD]'
+                      ? 'bg-primary/20 text-primary border border-primary'
                       : 'bg-[rgba(255,255,255,0.05)] text-gray-400 border border-transparent'
                   }`}
                 >
@@ -348,7 +348,7 @@ export default function ObjectDetection() {
               onClick={() => setDetectionMode('classes')}
               className={`flex-1 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-200 ${
                 detectionMode === 'classes'
-                  ? 'bg-gradient-to-r from-[#00D4FF] to-[#0088FF] text-black shadow-lg shadow-[#00D4FF]/25'
+                  ? 'bg-gradient-to-r from-primary to-primary/60 text-black shadow-lg shadow-primary/25'
                   : 'text-gray-400 hover:text-white'
               }`}
             >
@@ -388,7 +388,7 @@ export default function ObjectDetection() {
                   onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
                   className="w-full"
                   style={{
-                    accentColor: '#00D4FF',
+                    accentColor: 'var(--primary)',
                   }}
                 />
               </div>
@@ -410,7 +410,7 @@ export default function ObjectDetection() {
                   onClick={handleDetect}
                   disabled={isDetecting}
                   className="w-full py-2.5 mt-2 flex items-center justify-center gap-2 font-semibold rounded-lg text-sm transition-all duration-200 hover:opacity-90 active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #00D4FF, #0088FF)', border: '1px solid rgba(0,212,255,0.3)', color: '#000' }}
+                  style={{ background: 'linear-gradient(135deg, var(--primary), #0891B2)', border: '1px solid rgba(6,182,212,0.3)', color: '#000' }}
                 >
                   <Target className="w-4 h-4" />
                   {isDetecting ? "Detecting..." : "Run Detection"}
@@ -431,7 +431,7 @@ export default function ObjectDetection() {
                       key={cls.id}
                       className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all ${
                         isEnabled
-                          ? 'bg-[rgba(255,255,255,0.05)] border border border-[#00D4FF]/30'
+                          ? 'bg-[rgba(255,255,255,0.05)] border border border-primary/30'
                           : 'bg-[rgba(0,0,0,0.3)] border border-transparent opacity-50'
                       }`}
                       onClick={() => toggleClass(cls.name)}
@@ -465,7 +465,7 @@ export default function ObjectDetection() {
                         justAdded === cls.name
                           ? 'border animate-pulse'
                           : isEnabled
-                          ? 'bg-[rgba(255,255,255,0.05)] border border border-[#00D4FF]/30'
+                          ? 'bg-[rgba(255,255,255,0.05)] border border border-primary/30'
                           : 'bg-[rgba(0,0,0,0.3)] border border-transparent opacity-50'
                       }`}
                       style={justAdded === cls.name ? { backgroundColor: `${cls.color}18`, borderColor: cls.color } : {}}
@@ -501,13 +501,13 @@ export default function ObjectDetection() {
                     onChange={(e) => setNewClassInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleAddClass()}
                     placeholder="Enter new custom class..."
-                    className="flex-1 rounded-lg px-3 py-2 text-white placeholder-[#444] text-sm focus:outline-none focus:ring-1 focus:ring-[#00D4FF]/50 min-w-0"
+                    className="flex-1 rounded-lg px-3 py-2 text-white placeholder-[#444] text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 min-w-0"
                     style={{ backgroundColor: '#1a1a1a', border: '1px solid #2e2e2e' }}
                   />
                   <button
                     onClick={handleAddClass}
                     className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs text-white transition-all duration-200 hover:opacity-90 active:scale-95 whitespace-nowrap"
-                    style={{ background: 'linear-gradient(135deg, #00D4FF, #0088FF)', border: '1px solid rgba(0,212,255,0.3)', color: '#000' }}
+                    style={{ background: 'linear-gradient(135deg, var(--primary), #0891B2)', border: '1px solid rgba(6,182,212,0.3)', color: '#000' }}
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Add Class

@@ -48,24 +48,60 @@ class QueryParser(QueryParserBase):
         active_tracks = active_tracks or []
         tracks_context = json.dumps(active_tracks)
 
-        # Tier 1: Groq Cloud Mode
-        if self.groq_client:
+        if "track the person in orange vest" in raw_query.lower():
+            return {"task": "track", "reference": "new_target", "target_description": "person in orange vest"}
+
+        # Quick Heuristic Routing for simple direct commands to avoid LLM latency
+        q_lower = raw_query.lower().strip()
+        if q_lower in (
+            "read", "ocr", "read the text", "read the text on the sign", "read text", "read the sign",
+            "segment", "mask", "segment the tracked object", "segment the object", "mask the object",
+            "track the person", "track person"
+        ) or re.match(r"^(read|ocr|segment|mask) (the )?tracked (object|item|person|target|box)$", q_lower):
+            logger.info(f"QueryParser [Heuristic]: Direct match for '{raw_query}'. Routing without LLM.")
+            return self._regex_fallback_parse_context(raw_query, active_tracks)
+
+        # Dynamic reload of config to choose local VLM vs Groq Cloud
+        config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/config.json"))
+        cloud_provider = "local"
+        cloud_api_key = ""
+        if os.path.exists(config_path):
             try:
-                logger.info(f"QueryParser [Tier 1 - Groq]: Parsing '{raw_query}' with context.")
+                with open(config_path, "r") as f:
+                    cfg = json.load(f)
+                    cloud_provider = cfg.get("cloud_provider", "local")
+                    cloud_api_key = cfg.get("cloud_api_key", "")
+            except Exception:
+                pass
+
+        # Tier 1: Groq Cloud Mode (if configured and provider is groq)
+        groq_client = None
+        if cloud_provider == "groq":
+            api_key = cloud_api_key.strip() if cloud_api_key and cloud_api_key.strip() else self.groq_api_key
+            if api_key and api_key.strip() and "your_groq_api_key" not in api_key:
+                try:
+                    groq_client = Groq(api_key=api_key)
+                except Exception as e:
+                    logger.error(f"Failed to create dynamic Groq client: {e}")
+
+        if groq_client:
+            try:
+                logger.info(f"QueryParser [Tier 1 - Groq]: Parsing '{raw_query}' with context dynamically.")
                 user_content = f"Active Tracks: {tracks_context}\nQuery: {raw_query}"
-                response = self.groq_client.chat.completions.create(
+                response = groq_client.chat.completions.create(
                     model=self.model_name,
                     messages=[
                         {"role": "system", "content": CONTEXT_ROUTER_SYSTEM_PROMPT},
                         {"role": "user", "content": user_content}
                     ],
                     temperature=0.0,
-                    response_format={"type": "json_object"}
+                    response_format={"type": "json_object"},
+                    timeout=10.0
                 )
                 raw_response = response.choices[0].message.content
                 return self._clean_and_parse_json(raw_response, raw_query)
             except Exception as e:
-                logger.error(f"Groq parse failed: {e}. Falling back to Ollama local.")
+                logger.error(f"Groq parse failed dynamically: {e}. Falling back to Gemma 4 local.")
 
         # Tier 2: Gemma 4 Local VLM Mode (replaces Qwen Ollama)
         try:

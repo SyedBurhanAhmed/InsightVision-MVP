@@ -16,6 +16,7 @@ class TrackManager:
         self.trackers: Dict[str, ConcreteTracker] = {}
         self.active_tracks: Dict[str, Dict[int, str]] = {}
         self.history_buffers: Dict[str, List[Dict[str, Any]]] = {}
+        self.last_confidences: Dict[str, Dict[int, float]] = {}
 
     def get_or_create_tracker(self, session_id: str) -> ConcreteTracker:
         """
@@ -51,7 +52,9 @@ class TrackManager:
             List of dictionaries representing active tracked objects
         """
         tracker = self.get_or_create_tracker(session_id)
+        logger.info(f"[TrackManager] Running tracker.update, dets shape={dets.shape}")
         tracks = tracker.update(dets, img)
+        logger.info(f"[TrackManager] Done tracker.update, tracks size={len(tracks)}")
         
         output = []
         for row in tracks:
@@ -67,11 +70,19 @@ class TrackManager:
             # Maintain label mapping for persistence
             self.active_tracks[session_id][track_id_int] = label_name
             
+            if session_id not in self.last_confidences:
+                self.last_confidences[session_id] = {}
+            score_val = float(score)
+            if score_val > 0.01:
+                self.last_confidences[session_id][track_id_int] = score_val
+            else:
+                score_val = self.last_confidences[session_id].get(track_id_int, 0.0)
+
             output.append({
                 "bbox": [float(x1), float(y1), float(x2 - x1), float(y2 - y1)],
                 "track_id": track_id_int,
                 "label": label_name,
-                "confidence": float(score)
+                "confidence": score_val
             })
             
         # Maintain sliding history buffer (cap at 30 frames)
@@ -97,3 +108,5 @@ class TrackManager:
             del self.active_tracks[session_id]
         if session_id in self.history_buffers:
             del self.history_buffers[session_id]
+        if session_id in self.last_confidences:
+            del self.last_confidences[session_id]

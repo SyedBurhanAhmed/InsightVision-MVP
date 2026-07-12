@@ -3,12 +3,26 @@ import os
 import torch
 import logging
 import time
+
+# Check config to patch CUDA if hardware acceleration is disabled
+try:
+    import json
+    config_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../outputs/config.json"))
+    if os.path.exists(config_path):
+        with open(config_path, "r") as f:
+            cfg = json.load(f)
+            if not cfg.get("hardware_acceleration", True):
+                print("Hardware Acceleration is DISABLED in config.json. Overriding CUDA availability to False.")
+                torch.cuda.is_available = lambda: False
+except Exception as e:
+    print(f"Error checking hardware acceleration in config: {e}")
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Add GroundingDINO source to path
-_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO")
+_DINO_ROOT = os.path.expanduser("~/insightvision_benchmarks/GroundingDINO_sam3")
 if _DINO_ROOT not in sys.path:
     sys.path.insert(0, _DINO_ROOT)
 
@@ -76,6 +90,22 @@ async def lifespan(app: FastAPI):
         logger.error(f"Failed to init QueryParser: {e}")
         ml_models["query_parser"] = None
 
+    # ── 4. Load SAM 3 Image Model ───────────────────────────────────────────
+    logger.info("Loading SAM3 image model...")
+    t_sam3 = time.time()
+    try:
+        from sam3.model_builder import build_sam3_image_model
+        from sam3.model.sam3_image_processor import Sam3Processor
+        model_sam3 = build_sam3_image_model()
+        processor_sam3 = Sam3Processor(model_sam3)
+        ml_models["sam3_model"] = model_sam3
+        ml_models["sam3_processor"] = processor_sam3
+        logger.info(f"SAM3 image model loaded in {(time.time()-t_sam3)*1000:.0f} ms.")
+    except Exception as e:
+        logger.error(f"Failed to load SAM3: {e}")
+        ml_models["sam3_model"] = None
+        ml_models["sam3_processor"] = None
+
     yield
 
     ml_models.clear()
@@ -84,6 +114,7 @@ async def lifespan(app: FastAPI):
 
 # ── App factory ─────────────────────────────────────────────────────────────
 from app.routers import vision, query as query_router
+from app.routers import session as session_router
 
 app = FastAPI(title="InsightVision API", version="0.3.0", lifespan=lifespan)
 
@@ -97,6 +128,7 @@ app.add_middleware(
 
 app.include_router(vision.router, prefix="/api")
 app.include_router(query_router.router, prefix="/api/vision")
+app.include_router(session_router.router)   # WS /ws/session — live session endpoint
 
 
 @app.get("/health")
@@ -113,7 +145,8 @@ def health_check():
         "gpu": has_gpu,
         "device": device_name,
         "vram_gb": vram_gb,
-        "detector_loaded": ml_models.get("detector") is not None,
-        "florence_loaded": ml_models.get("florence_model") is not None,
-        "query_parser_loaded": ml_models.get("query_parser") is not None,
+        "detector_loaded":      ml_models.get("detector") is not None,
+        "sam3_loaded":           ml_models.get("sam3_model") is not None,
+        "florence_loaded":       ml_models.get("florence_model") is not None,
+        "query_parser_loaded":   ml_models.get("query_parser") is not None,
     }

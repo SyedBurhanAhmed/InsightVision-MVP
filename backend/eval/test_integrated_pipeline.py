@@ -150,8 +150,41 @@ def run_integrated_pipeline():
     latency = (time.time() - t_start) * 1000
 
     masks = output.get("masks", [])
+    sam3_boxes = output.get("boxes", [])
+    
     if masks is not None and len(masks) > 0:
-        mask = masks[0]
+        # Match each detected box with the tracked box to find the correct mask index
+        best_idx = 0
+        best_iou = -1.0
+        
+        for idx, sbox in enumerate(sam3_boxes):
+            if isinstance(sbox, torch.Tensor):
+                sbox = sbox.cpu().numpy()
+            sx1, sy1, sx2, sy2 = sbox
+            
+            # Compute intersection
+            ix1 = max(tx1, sx1)
+            iy1 = max(ty1, sy1)
+            ix2 = min(tx2, sx2)
+            iy2 = min(ty2, sy2)
+            
+            iw = max(0.0, ix2 - ix1)
+            ih = max(0.0, iy2 - iy1)
+            area_intersection = iw * ih
+            
+            # Compute union
+            area_track = (tx2 - tx1) * (ty2 - ty1)
+            area_sam3 = (sx2 - sx1) * (sy2 - sy1)
+            area_union = area_track + area_sam3 - area_intersection
+            
+            iou = area_intersection / area_union if area_union > 0 else 0.0
+            if iou > best_iou:
+                best_iou = iou
+                best_idx = idx
+                
+        print(f"✔ Matched SAM 3 mask index {best_idx} with IoU: {best_iou:.4f}")
+        
+        mask = masks[best_idx]
         if isinstance(mask, torch.Tensor):
             mask = mask.cpu().numpy().astype(np.uint8)
         if len(mask.shape) == 3 and mask.shape[0] == 1:
@@ -173,7 +206,7 @@ def run_integrated_pipeline():
         cv2.putText(blended, f"Track {track_id} (License Plate)", (tx1_i, ty1_i - 8),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         
-        out_path = "outputs/integrated_pipeline_test.png"
+        out_path = "outputs/checking_integrated_pipeline_test.png"
         os.makedirs("outputs", exist_ok=True)
         cv2.imwrite(out_path, blended)
         print(f"✔ Saved visual pipeline result to: {out_path}")
