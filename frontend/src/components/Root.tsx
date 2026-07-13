@@ -1,4 +1,4 @@
-import { Outlet, Link, useLocation } from 'react-router';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   Target,
   BarChart3,

@@ -73,6 +73,7 @@ def get_benchmark_results():
     """Return pipeline and model comparison benchmark results."""
     import os
     import json
+    import torch
     json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../outputs/benchmark_results.json"))
     if not os.path.exists(json_path):
         try:
@@ -82,7 +83,12 @@ def get_benchmark_results():
             logger.error(f"Failed to auto-generate benchmark results: {e}")
     if os.path.exists(json_path):
         with open(json_path, "r") as f:
-            return json.load(f)
+            data = json.load(f)
+        # Determine GPU device name dynamically
+        has_gpu = torch.cuda.is_available()
+        device_name = torch.cuda.get_device_name(0) if has_gpu else "CPU Mode"
+        data["gpu_device_name"] = device_name
+        return data
     return {"error": "Benchmark results file not found"}
 
 class ConfigPayload(BaseModel):
@@ -205,6 +211,7 @@ class SessionState:
     pending_targets: Dict[str, PendingTarget] = field(default_factory=dict)
     fps: float = 25.0
     last_frame_t: float = 0.0
+    last_tracks: List[dict] = field(default_factory=list)
     sender_task: Optional[asyncio.Task] = None
 
 
@@ -362,6 +369,7 @@ async def _lock_on(
     state.last_redetect_t = time.time()
     state.last_redetect_frame = state.frame_idx
     state.initial_track_count = max(state.initial_track_count, len(tracks))
+    state.last_tracks = tracks
 
     for t in tracks:
         tid = t["track_id"]
@@ -645,14 +653,101 @@ async def _process_frame(state: SessionState, frame_bgr: np.ndarray):
     t0 = time.time()
 
     if state.track_meta:
-        # Tracks exist — propagate with Kalman only (empty detection batch)
-        empty = np.empty((0, 6), dtype=np.float32)
-        tracks = await _run_in_thread(
-            state.track_manager.update_track,
-            state.session_id, empty, frame_bgr, [state.redetect_prompt],
-        )
-        # Check adaptive re-detection
-        tracks = await _adaptive_redetect(state, frame_bgr, tracks)
+        # Determine if we should trigger adaptive re-detection BEFORE updating the tracker
+        elapsed_frames = state.frame_idx - state.last_redetect_frame
+        required_cooldown = int(REDETECT_COOLDOWN_S * state.fps)
+        
+        # Dynamic periodic cooldown based on localizer robustness characteristics
+        if state.localizer == "sam3":
+            periodic_cooldown_s = 0.1  # SAM3 is sensitive to posture changes, correct more frequently
+        else:
+            periodic_cooldown_s = 0.3  # Grounding DINO holds tracking well, run less frequently to save compute
+        # periodic_cooldown_s = 0.3    
+        periodic_cooldown = int(periodic_cooldown_s * state.fps)
+        
+        should_redetect = False
+        reason = None
+        triggered_tid = None
+
+        if elapsed_frames >= required_cooldown:
+            # Trigger 1: track count dropped below initial target count
+            if len(state.last_tracks) < state.initial_track_count:
+                should_redetect = True
+                reason = "lost"
+
+            # Trigger 2: per-track confidence drift/low streak
+            if not should_redetect:
+                for t in state.last_tracks:
+                    tid = t["track_id"]
+                    meta = state.track_meta.get(tid)
+                    if meta:
+                        if t["confidence"] < CONF_DROP_THRESHOLD:
+                            meta.low_conf_streak += 1
+                            if meta.low_conf_streak >= CONF_LOW_STREAK:
+                                should_redetect = True
+                                reason = "drift"
+                                triggered_tid = tid
+                                break
+                        else:
+                            meta.low_conf_streak = 0
+
+            # Trigger 3: periodic correction to keep Kalman filter aligned with ground truth
+            if not should_redetect and elapsed_frames >= periodic_cooldown:
+                should_redetect = True
+                reason = "periodic"
+
+        if should_redetect:
+            logger.info(
+                f"[{state.session_id}] Adaptive redetect | reason={reason} "
+                f"tid={triggered_tid} | backend={state.localizer}"
+            )
+            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+            det = await _detect(state, frame_rgb, state.redetect_prompt)
+
+            new_dets = (
+                np.array(
+                    [[b[0], b[1], b[2], b[3], s, 0.0]
+                     for b, s in zip(det["boxes"], det["scores"])],
+                    dtype=np.float32,
+                )
+                if det["boxes"] else np.empty((0, 6), dtype=np.float32)
+            )
+
+            # Update tracker EXACTLY ONCE with the new detections
+            tracks = await _run_in_thread(
+                state.track_manager.update_track,
+                state.session_id, new_dets, frame_bgr, [state.redetect_prompt],
+            )
+
+            # Warm up tracker if association failed to prevent track ID reset
+            if len(new_dets) > 0 and not any(t["track_id"] in state.track_meta for t in tracks):
+                for _ in range(2):
+                    tracks = await _run_in_thread(
+                        state.track_manager.update_track,
+                        state.session_id, new_dets, frame_bgr, [state.redetect_prompt],
+                    )
+
+            state.last_redetect_frame = state.frame_idx
+        else:
+            # Normal tracking path: propagate with Kalman filter only (empty detection batch)
+            # Update tracker EXACTLY ONCE
+            empty = np.empty((0, 6), dtype=np.float32)
+            tracks = await _run_in_thread(
+                state.track_manager.update_track,
+                state.session_id, empty, frame_bgr, [state.redetect_prompt],
+            )
+            
+            # Update confidence streak counts
+            for t in tracks:
+                tid = t["track_id"]
+                meta = state.track_meta.get(tid)
+                if meta:
+                    if t["confidence"] < CONF_DROP_THRESHOLD:
+                        meta.low_conf_streak += 1
+                    else:
+                        meta.low_conf_streak = 0
+
+        state.last_tracks = tracks
     else:
         # No lock-on yet — push empty update so client sees the frame counter ticking
         tracks = []
@@ -854,6 +949,7 @@ async def _run_followup_query(state: SessionState, task: str, track_id: int):
                     "vote_count":    ocr_res["vote_count"],
                     "total_samples": ocr_res["total_samples"],
                 }
+                data["result"] = f'Extracted text: "{ocr_res["text"]}" (Confidence: {int(ocr_res["confidence"] * 100)}%)'
                 summary = composer.compose(
                     "ocr",
                     {"boxes": [], "labels": [], "scores": [], "text": ocr_res["text"]},
@@ -885,12 +981,24 @@ async def _run_followup_query(state: SessionState, task: str, track_id: int):
                 mask = seg_res.get("mask")
                 mask_px = int(mask.sum()) if mask is not None else 0
                 h_f, w_f = frame.shape[:2]
+                
+                # Extract contour polygons
+                polygons = []
+                if mask is not None:
+                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    for c in contours:
+                        if len(c) > 2:
+                            points = c.reshape(-1, 2).tolist()
+                            polygons.append(points)
+
                 data = {
                     "has_mask":           mask is not None,
                     "mask_pixels":        mask_px,
                     "frame_coverage_pct": round(mask_px / (h_f * w_f) * 100, 2) if mask_px else 0.0,
                     "inference_ms":       seg_res["inference_ms"],
+                    "polygons":           polygons,
                 }
+                data["result"] = f"Mask generated successfully covering {data['frame_coverage_pct']}% of frame pixels."
                 summary = composer.compose(
                     "segment",
                     {
@@ -923,7 +1031,7 @@ async def _run_followup_query(state: SessionState, task: str, track_id: int):
                         f"Describe this object in detail. Task: {task}",
                     )
                     description = res.get("text", "")
-                    data = {"description": description, "task": task}
+                    data = {"description": description, "task": task, "result": description}
                     summary = composer.compose(
                         task,
                         {"boxes": [live_bbox_xyxy], "labels": [task], "scores": [1.0],
@@ -1030,7 +1138,10 @@ async def _upload_loop(ws: WebSocket, state: SessionState):
                 })
 
         elif mtype == "command":
-            await _handle_command(ws, state, msg.get("text", "").strip())
+            # Run command handler as a background task to keep the main frame-receive loop completely unblocked!
+            task = asyncio.create_task(_handle_command(ws, state, msg.get("text", "").strip()))
+            state.pending_tasks.add(task)
+            task.add_done_callback(state.pending_tasks.discard)
 
         elif mtype == "ping":
             await _emit(state, {"type": "pong"})

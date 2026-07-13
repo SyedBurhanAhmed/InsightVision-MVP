@@ -106,6 +106,17 @@ async def lifespan(app: FastAPI):
         ml_models["sam3_model"] = None
         ml_models["sam3_processor"] = None
 
+    # ── 5. Preload Gemma 4 Local Model ──────────────────────────────────────
+    logger.info("Preloading Gemma 4 local model...")
+    t_gemma = time.time()
+    try:
+        from app.services.gemma4 import Gemma4Service
+        gemma_svc = Gemma4Service()
+        gemma_svc.load_model()
+        logger.info(f"Gemma 4 model preloaded successfully in {(time.time()-t_gemma)*1000:.0f} ms.")
+    except Exception as e:
+        logger.error(f"Failed to preload Gemma 4: {e}")
+
     yield
 
     ml_models.clear()

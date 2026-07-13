@@ -1,8 +1,9 @@
 import {
   Info, Users, Award, BookOpen, Link2, Mail, ExternalLink, Shield,
   Target, Brain, Server, Layers, Camera, Code, Activity, Database,
-  Wifi, Eye, FlaskConical
+  Wifi, Eye, FlaskConical, Globe
 } from 'lucide-react';
+import burhanProfile from '../../assets/burhan.png';
 
 // ─── Team ─────────────────────────────────────────────────────────────────────
 // Burhan's contact info is confirmed. Waleed and Fatima contact info are
@@ -18,9 +19,11 @@ const teamMembers = [
       'WebSocket live session system and the three-tier benchmark methodology that drives ' +
       'every architectural decision in the shipped system.',
     email: 'syedburhanahmedd@gmail.com',
-    linkedin: 'https://linkedin.com/in/syed-burhanahmed',
+    linkedin: 'https://www.linkedin.com/in/syed-burhan-ahmed/',
     github: 'https://github.com/SyedBurhanAhmed',
+    website: 'https://syedburhanahmed.dev/',
     emailDisplay: 'syedburhanahmedd@gmail.com',
+    image: burhanProfile,
   },
   {
     name: 'Waleed Ahmed',
@@ -32,10 +35,10 @@ const teamMembers = [
       '(Grounding DINO, SAM 3, Florence-2, Qwen2.5-VL, OmDet-Turbo, CLIP, etc.) were ' +
       'worth benchmarking — and maintained technical documentation across the project.',
     // TODO: confirm Waleed's email and LinkedIn before defense
-    email: '#',
+    email: 'Wal33d.ahm.d@gmail.com',
     linkedin: '#',
     github: '#',
-    emailDisplay: 'TODO: confirm with Waleed',
+    emailDisplay: 'Wal33d.ahm.d@gmail.com',
   },
   {
     name: 'Fatima Surraya Islam',
@@ -47,10 +50,10 @@ const teamMembers = [
       'with reconciliation of her backend work against the main system\'s API surface ' +
       'via a unified contract forming part of the integration effort.',
     // TODO: confirm Fatima's email and LinkedIn before defense
-    email: '#',
+    email: 'Fatimaislam1611@gmail.com',
     linkedin: '#',
     github: '#',
-    emailDisplay: 'TODO: confirm with Fatima',
+    emailDisplay: 'Fatimaislam1611@gmail.com',
   },
 ];
 
@@ -215,11 +218,22 @@ export default function About() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {teamMembers.map((member, idx) => (
             <div key={idx} className="p-6 rounded-lg bg-muted border border-border hover:border-primary/30 transition-all flex flex-col">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/40 mx-auto mb-4 flex items-center justify-center flex-shrink-0">
-                <span className="text-3xl font-bold text-white">
-                  {member.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
-                </span>
-              </div>
+              {member.image ? (
+                <div className="w-20 h-20 rounded-full mx-auto mb-4 flex-shrink-0 overflow-hidden ring-2 ring-primary/20">
+                  <img
+                    src={member.image}
+                    alt={member.name}
+                    className="w-full h-full object-cover"
+                    style={{ objectPosition: 'center 20%' }}
+                  />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/40 mx-auto mb-4 flex items-center justify-center flex-shrink-0 ring-2 ring-primary/20">
+                  <span className="text-3xl font-bold text-white tracking-wider">
+                    {member.name.split(' ').map((n: string) => n[0]).join('').slice(0, 2)}
+                  </span>
+                </div>
+              )}
               <h4 className="text-xl font-bold text-white text-center mb-1">{member.name}</h4>
               <p className="text-xs font-semibold text-primary text-center mb-3 leading-snug tracking-wide uppercase">{member.role}</p>
               <p className="text-xs text-gray-400 leading-relaxed mb-4 text-center flex-1">{member.contribution}</p>
@@ -235,16 +249,25 @@ export default function About() {
                   )}
                 </div>
                 <div className="flex justify-center gap-3">
-                  {member.linkedin !== '#' && (
+                  {member.linkedin && member.linkedin !== '#' && (
                     <a href={member.linkedin} target="_blank" rel="noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-all duration-300">
+                      className="text-muted-foreground hover:text-primary transition-all duration-300"
+                      title="LinkedIn">
                       <Link2 className="w-5 h-5" />
                     </a>
                   )}
-                  {member.github !== '#' && (
+                  {member.github && member.github !== '#' && (
                     <a href={member.github} target="_blank" rel="noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-all duration-300">
+                      className="text-muted-foreground hover:text-primary transition-all duration-300"
+                      title="GitHub">
                       <ExternalLink className="w-5 h-5" />
+                    </a>
+                  )}
+                  {member.website && member.website !== '#' && (
+                    <a href={member.website} target="_blank" rel="noreferrer"
+                      className="text-muted-foreground hover:text-primary transition-all duration-300"
+                      title="Website">
+                      <Globe className="w-5 h-5" />
                     </a>
                   )}
                 </div>

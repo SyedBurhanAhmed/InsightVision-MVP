@@ -163,3 +163,44 @@ class Gemma4Service:
         input_len = inputs["input_ids"].shape[1]
         generated_text = self.processor.decode(generated_ids[0][input_len:], skip_special_tokens=True).strip()
         return generated_text
+
+    def compose_text_response(self, original_query: str, extracted_result: str) -> str:
+        """
+        Uses local Gemma 4 in text-only mode to compose a natural, professional response
+        answering the user's query using the raw extracted information.
+        """
+        self.load_model()
+        
+        prompt_instruction = (
+            f"You are the visual assistant answering a user's question about an object in a video stream.\n"
+            f"User Question: '{original_query}'\n"
+            f"Raw Extracted/Read Text from Object: '{extracted_result}'\n\n"
+            f"Generate a professional, concise, one-sentence response that directly answers the user's question using the raw extracted information.\n"
+            f"Do not include any extra explanation or introductory/conversational filler. Just output the final sentence."
+        )
+        
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt_instruction}
+                ]
+            }
+        ]
+        
+        text_prompt = self.processor.apply_chat_template(messages, tokenize=False, add_generation_prompt=True)
+        inputs = self.processor(
+            text=text_prompt,
+            return_tensors="pt"
+        ).to(self.model.device)
+        
+        with torch.no_grad():
+            generated_ids = self.model.generate(
+                **inputs,
+                max_new_tokens=100,
+                do_sample=False,
+            )
+            
+        input_len = inputs["input_ids"].shape[1]
+        generated_text = self.processor.decode(generated_ids[0][input_len:], skip_special_tokens=True).strip()
+        return generated_text

@@ -4,7 +4,6 @@ import logging
 import re
 from typing import Dict, Any, List
 from groq import Groq
-import ollama
 from dotenv import load_dotenv
 
 from .query_parser_base import QueryParserBase
@@ -156,6 +155,11 @@ class QueryParser(QueryParserBase):
             
         # Default attribute for OCR
         task = parsed_json.get("task", "describe")
+        q_lower = raw_query.lower()
+        if any(w in q_lower for w in ["read", "ocr", "number on", "license", "plate", "text", "digits", "characters", "letters", "written"]):
+            if not any(w in q_lower for w in ["segment", "mask", "outline", "highlight"]):
+                task = "ocr"
+
         attribute = None
         if task == "ocr":
             attribute = "text"

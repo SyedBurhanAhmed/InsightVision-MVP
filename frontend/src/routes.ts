@@ -1,4 +1,4 @@
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter } from "react-router-dom";
 import Root from "./components/Root";
 import Dashboard from "./components/pages/Dashboard";
 import LiveCamera from "./components/pages/LiveCamera";

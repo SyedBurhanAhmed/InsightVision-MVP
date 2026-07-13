@@ -1,9 +1,7 @@
 import numpy as np
-import time
 import logging
 import cv2
 from PIL import Image
-from typing import Dict, Any
 
 from app.services.composer_base import ComposerBase
 
@@ -78,6 +76,17 @@ class NLComposer(ComposerBase):
             text = result.get("text", "").strip()
             if not text:
                 return "No readable text was found in the specified region."
+            try:
+                from app.services.gemma4 import Gemma4Service
+                gemma_svc = Gemma4Service()
+                composed_ans = gemma_svc.compose_text_response(original_query, text)
+                if composed_ans:
+                    return composed_ans
+            except Exception as e:
+                logger.error(f"Failed to dynamically compose OCR response: {e}")
+            q_lower = original_query.lower()
+            if "plate" in q_lower or "license" in q_lower:
+                return f"The number on the number plate is: {text}!"
             return f"The extracted text reads: \"{text}\"."
 
         elif task == "segment":

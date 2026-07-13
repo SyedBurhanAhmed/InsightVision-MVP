@@ -46,6 +46,11 @@ export default function Dashboard() {
   const [sessionId, setSessionId] = useState('');
   const [latestTracks, setLatestTracks] = useState<Track[]>([]);
   const [frameCounter, setFrameCounter] = useState(0);
+  const [activeMasks, setActiveMasks] = useState<Record<number, number[][][]>>({});
+  const [realTimeStats, setRealTimeStats] = useState({ fps: '0.0', latency: '0.0' });
+
+  const frameArrivalTimesRef = useRef<number[]>([]);
+  const smoothedBoxesRef = useRef<Record<number, [number, number, number, number]>>({});
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
@@ -195,19 +200,44 @@ export default function Dashboard() {
         if (ctx) {
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
+          // Clean up smoothed boxes for stale tracks
+          const activeIds = new Set(latestTracksRef.current.map(t => t.track_id));
+          Object.keys(smoothedBoxesRef.current).forEach((key) => {
+            const id = Number(key);
+            if (!activeIds.has(id)) {
+              delete smoothedBoxesRef.current[id];
+            }
+          });
+
           // Draw all active tracks
           latestTracksRef.current.forEach((t) => {
             const [x, y, w, h] = t.bbox;
+            
+            // Smooth bbox transition using Exponential Moving Average (EMA)
+            let sx = x;
+            let sy = y;
+            let sw = w;
+            let sh = h;
+            if (smoothedBoxesRef.current[t.track_id]) {
+              const [prevX, prevY, prevW, prevH] = smoothedBoxesRef.current[t.track_id];
+              const alpha = 0.22; // lower = smoother transition, higher = faster snapping response
+              sx = prevX + (x - prevX) * alpha;
+              sy = prevY + (y - prevY) * alpha;
+              sw = prevW + (w - prevW) * alpha;
+              sh = prevH + (h - prevH) * alpha;
+            }
+            smoothedBoxesRef.current[t.track_id] = [sx, sy, sw, sh];
+
             const videoW = video.videoWidth || 640;
             const videoH = video.videoHeight || 480;
 
             const scaleX = canvas.width / videoW;
             const scaleY = canvas.height / videoH;
 
-            const cx = x * scaleX;
-            const cy = y * scaleY;
-            const cw = w * scaleX;
-            const ch = h * scaleY;
+            const cx = sx * scaleX;
+            const cy = sy * scaleY;
+            const cw = sw * scaleX;
+            const ch = sh * scaleY;
 
             // Draw bounding box outline with curated high-vibrancy track colors and neon glow
             const colors = ['#00D4FF', '#39FF14', '#FF0055', '#FFD60A', '#9D4EDD', '#06B6D4'];
@@ -225,6 +255,26 @@ export default function Dashboard() {
               ctx.rect(cx, cy, cw, ch);
             }
             ctx.stroke();
+
+            // Draw segmentation mask if active
+            if (activeMasks[t.track_id]) {
+              const polygons = activeMasks[t.track_id];
+              polygons.forEach((poly) => {
+                ctx.beginPath();
+                poly.forEach(([px, py], pIdx) => {
+                  const mx = px * scaleX;
+                  const my = py * scaleY;
+                  if (pIdx === 0) ctx.moveTo(mx, my);
+                  else ctx.lineTo(mx, my);
+                });
+                ctx.closePath();
+                ctx.fillStyle = `${color}4D`; // ~30% opacity fill
+                ctx.fill();
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2.0;
+                ctx.stroke();
+              });
+            }
 
             // Disable shadow blur for tag rendering to keep text crisp
             ctx.shadowBlur = 0;
@@ -379,6 +429,23 @@ export default function Dashboard() {
         setFrameCounter(msg.frame_idx);
         isWaitingForAckRef.current = false;
 
+        // Calculate real-time frame rates and log hardware latencies
+        const nowMs = performance.now();
+        const arrivals = frameArrivalTimesRef.current;
+        arrivals.push(nowMs);
+        if (arrivals.length > 20) {
+          arrivals.shift();
+        }
+        let fpsStr = '0.0';
+        if (arrivals.length > 1) {
+          const deltaSec = (arrivals[arrivals.length - 1] - arrivals[0]) / 1000;
+          fpsStr = deltaSec > 0 ? (arrivals.length / deltaSec).toFixed(1) : '0.0';
+        }
+        setRealTimeStats({
+          fps: fpsStr,
+          latency: msg.latency_ms !== undefined ? msg.latency_ms.toFixed(1) : '0.0'
+        });
+
         if (sourceMode === 'webcam') {
           setTimeout(() => {
             if (isSessionActiveRef.current) {
@@ -406,6 +473,12 @@ export default function Dashboard() {
         }
       } else if (msg.type === 'query_result') {
         addSystemMessage('result', `${msg.data.result || JSON.stringify(msg.data)} (${msg.latency_ms}ms)`);
+        if (msg.task === 'segment' && msg.data?.polygons) {
+          setActiveMasks((prev) => ({
+            ...prev,
+            [msg.track_id]: msg.data.polygons
+          }));
+        }
       } else if (msg.type === 'error') {
         addSystemMessage('error', `Error (${msg.code}): ${msg.detail || ''}`);
         if (msg.code === 'camera_disconnected' || msg.code === 'reconnect_failed') {
@@ -470,6 +543,7 @@ export default function Dashboard() {
     }
     stopWebcamTracks();
     setConnState('DISCONNECTED');
+    setActiveMasks({});
   };
 
   const sendCommand = (e: React.FormEvent) => {
@@ -493,6 +567,7 @@ export default function Dashboard() {
         text: command.trim(),
       })
     );
+    setCommand('');
   };
 
   return (
@@ -586,7 +661,7 @@ export default function Dashboard() {
           <div className="flex items-start justify-between mb-4">
             <div>
               <p className="text-xs uppercase font-mono font-bold text-slate-500 tracking-wider mb-1">Hardware Engine</p>
-              <h3 className="text-lg font-bold text-white leading-none font-sans">RTX 4090 [spec]</h3>
+              <h3 className="text-lg font-bold text-white leading-none font-sans">{benchmarkData?.gpu_device_name || "RTX 5070 Ti"} [spec]</h3>
             </div>
             <HardDrive className="w-6 h-6 text-primary group-hover:pulse transition-transform" />
           </div>
@@ -728,6 +803,24 @@ export default function Dashboard() {
         {/* Video / Webcam / RTSP Viewport */}
         {((sourceMode === 'upload' && videoSrc) || sourceMode === 'webcam') && (
           <div className="relative border border-slate-800 rounded-2xl overflow-hidden bg-black flex justify-center items-center aspect-video w-full max-h-[560px]">
+            {/* Real-time Diagnostics HUD */}
+            {connState === 'READY' && (
+              <div className="absolute top-4 left-4 z-20 bg-slate-950/85 border border-slate-800/80 px-3.5 py-2.5 rounded-xl backdrop-blur-md text-left font-mono pointer-events-none shadow-[0_4px_20px_rgba(0,0,0,0.5)]">
+                <div className="text-[10px] uppercase font-bold text-[#06B6D4] tracking-wider mb-2 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping shrink-0" />
+                  PIPELINE // LIVE
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+                  <span className="text-slate-400">FPS Rate:</span>
+                  <span className="text-white font-bold text-right">{realTimeStats.fps} FPS</span>
+                  <span className="text-slate-400">Latency:</span>
+                  <span className="text-white font-bold text-right">{realTimeStats.latency} ms</span>
+                  <span className="text-slate-400">Engine:</span>
+                  <span className="text-primary font-bold text-right uppercase text-[9px]">{localizer}</span>
+                </div>
+              </div>
+            )}
+
             {/* Active Tracking Nodes Absolute HUD Overlay */}
             {latestTracks.length > 0 && (
               <div className="absolute top-4 right-4 z-20 max-w-[280px] bg-slate-950/85 border border-slate-800/80 p-3.5 rounded-xl backdrop-blur-md space-y-2 text-left pointer-events-auto shadow-[0_4px_20px_rgba(0,0,0,0.5)]">

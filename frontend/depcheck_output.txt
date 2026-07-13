@@ -1,0 +1,4 @@
+Unused dependencies
+* tailwindcss
+Missing dependencies
+* react-router: ./src/App.tsx

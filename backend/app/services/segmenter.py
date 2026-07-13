@@ -2,9 +2,8 @@ import numpy as np
 import time
 import logging
 import cv2
-import torch
 from PIL import Image
-from typing import Dict, Any, List
+from typing import Any
 
 from app.services.segmenter_base import SegmenterBase
 

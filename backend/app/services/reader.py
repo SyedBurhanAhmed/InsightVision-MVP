@@ -4,7 +4,7 @@ import logging
 import re
 import cv2
 from PIL import Image
-from typing import Dict, Any
+from typing import Any
 
 from app.services.reader_base import ReaderBase
 from app.services.gemma4 import Gemma4Service
@@ -95,8 +95,8 @@ class Gemma4Reader(ReaderBase):
                 "latency_ms": (time.time() - t0) * 1000
             }
             
-        # Sample up to 5 frames evenly spaced
-        num_samples = min(5, len(matched_samples))
+        # Sample up to 3 frames evenly spaced
+        num_samples = min(3, len(matched_samples))
         indices = np.linspace(0, len(matched_samples) - 1, num_samples, dtype=int)
         
         raw_outputs = []

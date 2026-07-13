@@ -1,4 +1,3 @@
-import os
 import time
 import torch
 import logging
@@ -81,7 +80,6 @@ class GroundingDINODetector(DetectorBase):
         }
 
 
-import cv2
 class SAM3Detector(DetectorBase):
     def __init__(self, model=None):
         """

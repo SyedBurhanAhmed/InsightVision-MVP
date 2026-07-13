@@ -195,6 +195,7 @@ html {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 

@@ -3,7 +3,7 @@ import json
 import logging
 import hashlib
 import time
-from typing import Optional, Any
+from typing import Optional
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

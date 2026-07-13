@@ -11,7 +11,6 @@ import logging
 
 import cv2
 import numpy as np
-import torch
 from PIL import Image
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 
@@ -245,7 +244,7 @@ async def detect_objects(
                 boxes_to_seg.append([x, y, x + w, y + h])
                 
             t_seg_start = time.time()
-            seg_res = segmenter.segment(img_rgb, boxes_to_seg)
+            segmenter.segment(img_rgb, boxes_to_seg)
             seg_ms = (time.time() - t_seg_start) * 1000
             inference_ms += seg_ms
             logger.info(f"SAM3 Segmenter processed {len(objects)} object(s) in {seg_ms:.1f}ms")
