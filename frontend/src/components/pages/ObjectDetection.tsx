@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Target, Sliders, Eye, EyeOff, Plus, Sparkles, Download } from 'lucide-react';
+import { API_BASE_URL } from '../../lib/api-config';
 
 const objectClasses = [
   { id: 1, name: 'Person', count: 3, enabled: true, color: '#FF0040' },
@@ -135,7 +136,7 @@ export default function ObjectDetection() {
 
     try {
       // Assuming backend is running on localhost:8080
-      const res = await fetch("http://localhost:8000/api/detect", {
+      const res = await fetch(`${API_BASE_URL}/api/detect`, {
         method: "POST",
         body: formData,
       });

@@ -1,7 +1,8 @@
 import { History as HistoryIcon, Video, Search, Trash2, ChevronDown, ChevronUp, Clock, AlertCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../lib/api-config';
 
-const BACKEND = 'http://localhost:8000';
+const BACKEND = API_BASE_URL;
 
 const fallbackHistoryData: SessionItem[] = [];
 

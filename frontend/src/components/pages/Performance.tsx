@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Gauge, Cpu, HardDrive, Zap, Activity, Award } from 'lucide-react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import { API_BASE_URL } from '../../lib/api-config';
 
-const BACKEND = 'http://localhost:8000';
+const BACKEND = API_BASE_URL;
 
 type LocalizerBenchmark = {
   name: string;

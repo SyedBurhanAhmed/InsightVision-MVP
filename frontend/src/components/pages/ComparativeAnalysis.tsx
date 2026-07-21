@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { BarChart3, AlertTriangle, Layers, Zap, Info, ShieldCheck } from 'lucide-react';
+import { API_BASE_URL } from '../../lib/api-config';
 
-const BACKEND = 'http://localhost:8000';
+const BACKEND = API_BASE_URL;
 
 type LocalizerBenchmark = {
   name: string;

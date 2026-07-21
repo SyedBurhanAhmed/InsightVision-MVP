@@ -659,7 +659,7 @@ async def _process_frame(state: SessionState, frame_bgr: np.ndarray):
         
         # Dynamic periodic cooldown based on localizer robustness characteristics
         if state.localizer == "sam3":
-            periodic_cooldown_s = 0.1  # SAM3 is sensitive to posture changes, correct more frequently
+            periodic_cooldown_s = 0.2  # SAM3 is sensitive to posture changes, correct more frequently
         else:
             periodic_cooldown_s = 0.3  # Grounding DINO holds tracking well, run less frequently to save compute
         # periodic_cooldown_s = 0.3    

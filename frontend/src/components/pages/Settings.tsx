@@ -1,5 +1,6 @@
 import { Settings as SettingsIcon, Shield, Download, RotateCcw, Trash2, TrendingUp, Cloud, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../lib/api-config';
 
 export default function Settings() {
   const [notifications, setNotifications] = useState(true);
@@ -13,8 +14,7 @@ export default function Settings() {
   const [cloudApiKey, setCloudApiKey] = useState('');
 
   useEffect(() => {
-    const backendHost = window.location.hostname;
-    fetch(`http://${backendHost}:8000/api/config`)
+    fetch(`${API_BASE_URL}/api/config`)
       .then((res) => res.json())
       .then((data) => {
         setStorageLocation(data.storage_location || '');
@@ -30,9 +30,8 @@ export default function Settings() {
   }, []);
 
   const handleSave = async () => {
-    const backendHost = window.location.hostname;
     try {
-      const res = await fetch(`http://${backendHost}:8000/api/config`, {
+      const res = await fetch(`${API_BASE_URL}/api/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -56,10 +55,9 @@ export default function Settings() {
   };
 
   const handleReset = async () => {
-    const backendHost = window.location.hostname;
     const defaultStorage = `/home/burhan/projects/InsightVision-MVP/backend/outputs`;
     try {
-      const res = await fetch(`http://${backendHost}:8000/api/config`, {
+      const res = await fetch(`${API_BASE_URL}/api/config`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,9 +88,8 @@ export default function Settings() {
   };
 
   const handleClearCache = async () => {
-    const backendHost = window.location.hostname;
     try {
-      const res = await fetch(`http://${backendHost}:8000/api/cache/clear`, { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/cache/clear`, { method: 'POST' });
       if (res.ok) {
         alert("Redis and in-memory caches cleared successfully!");
       }
@@ -103,9 +100,8 @@ export default function Settings() {
 
   const handleClearHistory = async () => {
     if (!window.confirm("Are you sure you want to clear all session history? This action is irreversible.")) return;
-    const backendHost = window.location.hostname;
     try {
-      const res = await fetch(`http://${backendHost}:8000/api/session/history/clear`, { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/session/history/clear`, { method: 'POST' });
       if (res.ok) {
         alert("Session history timeline cleared successfully!");
       }

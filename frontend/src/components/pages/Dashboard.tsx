@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL, WS_BASE_URL } from '../../lib/api-config';
 import { 
   Upload, Play, Square, Send, Camera, Tv, Cpu, MessageSquare, 
   Activity, ShieldAlert, CheckCircle2, RefreshCw, ListFilter,
@@ -65,8 +66,7 @@ export default function Dashboard() {
   const [benchmarkData, setBenchmarkData] = useState<any>(null);
   
   useEffect(() => {
-    const backendHost = window.location.hostname;
-    fetch(`http://${backendHost}:8000/api/benchmark`)
+    fetch(`${API_BASE_URL}/api/benchmark`)
       .then((res) => res.json())
       .then((json) => {
         if (json && json.vram_diagnostics) {
@@ -77,7 +77,7 @@ export default function Dashboard() {
         console.warn("Failed to load benchmarks in Dashboard:", err);
       });
 
-    fetch(`http://${backendHost}:8000/api/config`)
+    fetch(`${API_BASE_URL}/api/config`)
       .then((res) => res.json())
       .then((cfg) => {
         if (cfg && cfg.default_model) {
@@ -391,8 +391,7 @@ export default function Dashboard() {
     }
 
     // Connect WebSocket
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.hostname}:8000/ws/session`;
+    const wsUrl = `${WS_BASE_URL}/ws/session`;
     
     addSystemMessage('status', `Connecting WebSocket session to ${localizer === 'sam3' ? 'SAM 3' : 'Grounding DINO'}...`);
     const ws = new WebSocket(wsUrl);
