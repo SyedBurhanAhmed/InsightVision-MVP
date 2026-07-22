@@ -1,0 +1,71 @@
+backend/test_botsort_lost.py:2:1: 'cv2' imported but unused
+backend/test_botsort.py:2:1: 'cv2' imported but unused
+backend/test_black_dino.py:1:1: 'cv2' imported but unused
+backend/test_sam3_raw.py:2:1: 'numpy as np' imported but unused
+backend/test_sam3_raw.py:3:1: 'time' imported but unused
+backend/test_sam3_raw.py:4:1: 'app.core.state.ml_models' imported but unused
+backend/test_session_ws_sim.py:4:1: 'time' imported but unused
+backend/benchmark_cache.py:2:1: 'hashlib' imported but unused
+backend/benchmark_cache.py:3:1: 'json' imported but unused
+backend/test_concrete_tracker.py:2:1: 'cv2' imported but unused
+backend/test_session_sim2.py:2:1: 'numpy as np' imported but unused
+backend/test_sam3_scores.py:2:1: 'numpy as np' imported but unused
+backend/test_sam3_scores.py:3:1: 'time' imported but unused
+backend/test_sam3_scores.py:4:1: 'app.core.state.ml_models' imported but unused
+backend/test_sam3_scores.py:9:1: 'sam3.model.sam3_image_processor.Sam3Processor' imported but unused
+backend/app/routers/session.py:704:13: local variable 't0_det' is assigned to but never used
+backend/app/routers/query.py:159:17: local variable 'seg_res' is assigned to but never used
+backend/app/routers/vision.py:14:1: 'torch' imported but unused
+backend/app/routers/vision.py:248:13: local variable 'seg_res' is assigned to but never used
+backend/app/models/schemas.py:19:1: 'time' imported but unused
+backend/app/models/schemas.py:145:5: redefinition of unused 'time' from line 19
+backend/app/services/segmenter.py:5:1: 'torch' imported but unused
+backend/app/services/segmenter.py:7:1: 'typing.Dict' imported but unused
+backend/app/services/segmenter.py:7:1: 'typing.List' imported but unused
+backend/app/services/segmenter.py:163:13: redefinition of unused 'torch' from line 5
+backend/app/services/composer.py:2:1: 'time' imported but unused
+backend/app/services/composer.py:6:1: 'typing.Dict' imported but unused
+backend/app/services/composer.py:6:1: 'typing.Any' imported but unused
+backend/app/services/query_parser.py:7:1: 'ollama' imported but unused
+backend/app/services/reader.py:7:1: 'typing.Dict' imported but unused
+backend/app/services/detector.py:1:1: 'os' imported but unused
+backend/app/services/detector.py:84:1: 'cv2' imported but unused
+backend/app/services/cache.py:6:1: 'typing.Any' imported but unused
+backend/eval/test_full_scenario.py:29:1: 'pathlib.Path' imported but unused
+backend/eval/test_full_scenario.py:248:11: f-string is missing placeholders
+backend/eval/test_full_scenario.py:269:7: f-string is missing placeholders
+backend/eval/test_full_scenario.py:319:11: f-string is missing placeholders
+backend/eval/test_full_scenario.py:330:15: f-string is missing placeholders
+backend/eval/test_full_scenario.py:332:15: f-string is missing placeholders
+backend/eval/test_sam3_native_tracking.py:20:11: f-string is missing placeholders
+backend/eval/test_sam3_native_tracking.py:99:13: local variable 'out_obj_ids' is assigned to but never used
+backend/eval/test_sam3_native_tracking.py:170:23: f-string is missing placeholders
+backend/eval/test_sam3_native_tracking.py:182:11: f-string is missing placeholders
+backend/eval/test_video_pipeline.py:25:11: f-string is missing placeholders
+backend/eval/test_video_pipeline.py:120:11: f-string is missing placeholders
+backend/eval/detector_speed.py:4:1: 'json' imported but unused
+backend/eval/detector_speed.py:22:1: 'app.core.state.ml_models' imported but unused
+backend/eval/detector_speed.py:88:9: local variable 'res' is assigned to but never used
+backend/eval/detector_speed.py:199:9: local variable 'res' is assigned to but never used
+backend/eval/test_pending_target.py:281:17: local variable 'drain' is assigned to but never used
+backend/eval/test_sam3_video_only.py:22:11: f-string is missing placeholders
+backend/eval/test_sam3_video_only.py:120:11: f-string is missing placeholders
+backend/eval/test_gemma4_ocr.py:4:1: 're' imported but unused
+backend/eval/test_gemma4_ocr.py:7:1: 'numpy as np' imported but unused
+backend/eval/test_tracker_video.py:29:11: f-string is missing placeholders
+backend/eval/test_tracker_video.py:124:11: f-string is missing placeholders
+backend/eval/test_cache_performance.py:14:1: 'json' imported but unused
+backend/eval/test_session_history.py:3:1: 'time' imported but unused
+backend/eval/test_dual_backend.py:6:1: 'numpy as np' imported but unused
+backend/eval/test_detector.py:3:1: 'time' imported but unused
+backend/eval/test_ocr_images.py:6:1: 'numpy as np' imported but unused
+backend/eval/test_ocr_images.py:8:1: 'PIL.ImageDraw' imported but unused
+backend/eval/test_context.py:3:1: 'json' imported but unused
+backend/eval/test_api_endpoints.py:3:1: 'time' imported but unused
+backend/eval/test_sam3_standalone.py:84:19: f-string is missing placeholders
+backend/eval/test_composer.py:5:1: 'numpy as np' imported but unused
+backend/eval/test_dino_standalone.py:93:9: local variable 'latency' is assigned to but never used
+backend/eval/test_api_routing.py:3:1: 'torch' imported but unused
+backend/eval/test_api_routing.py:5:1: 'numpy as np' imported but unused
+backend/eval/test_live_session.py:28:1: 'json' imported but unused
+backend/eval/test_live_session.py:239:5: local variable 't_cmd' is assigned to but never used

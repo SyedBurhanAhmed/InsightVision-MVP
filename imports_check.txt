@@ -1,0 +1,495 @@
+backend/test_botsort_lost.py:import numpy as np
+backend/test_botsort_lost.py:import cv2
+backend/test_botsort.py:import numpy as np
+backend/test_botsort.py:import cv2
+backend/test_black_dino.py:import cv2, numpy as np, asyncio
+backend/test_sam3_raw.py:import cv2
+backend/test_sam3_raw.py:import numpy as np
+backend/test_sam3_raw.py:from PIL import Image
+backend/test_sam3_raw.py:import torch
+backend/test_sam3_raw.py:cap = cv2.VideoCapture("../images/inisghtvision_testing_video.mp4")
+backend/test_sam3_raw.py:    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/test_sam3_raw.py:    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/test_session_ws_sim.py:import cv2
+backend/test_session_ws_sim.py:import numpy as np
+backend/test_session_ws_sim.py:    cap = cv2.VideoCapture("../images/insightvision_orange_vest_testing_video.mp4")
+backend/test_session_ws_sim.py:    det = detector.detect(cv2.cvtColor(frame0, cv2.COLOR_BGR2RGB), "person in orange vest", 0.4)
+backend/test_botsort_warmup.py:import cv2, numpy as np
+backend/test_botsort_warmup.py:cap = cv2.VideoCapture("../images/insightvision_orange_vest_testing_video.mp4")
+backend/app/routers/session.py:import cv2
+backend/app/routers/session.py:import numpy as np
+backend/app/routers/session.py:import torch
+backend/app/routers/session.py:from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+backend/app/routers/session.py:from pydantic import BaseModel
+backend/app/routers/session.py:    import torch
+backend/app/routers/session.py:        has_gpu = torch.cuda.is_available()
+backend/app/routers/session.py:        device_name = torch.cuda.get_device_name(0) if has_gpu else "CPU Mode"
+backend/app/routers/session.py:    cap: Optional[Any]       # cv2.VideoCapture for server-side; None for upload
+backend/app/routers/session.py:    """Decode a base64 JPEG/PNG string → BGR numpy array."""
+backend/app/routers/session.py:        frame = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+backend/app/routers/session.py:    frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+backend/app/routers/session.py:    frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+backend/app/routers/session.py:            frame_rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+backend/app/routers/session.py:                    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+backend/app/routers/session.py:                    from PIL import Image as _PIL_Image
+backend/app/routers/session.py:                    crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+backend/app/routers/session.py:                    crop_pil = _PIL_Image.fromarray(crop_rgb)
+backend/app/routers/session.py:    frame_reader — reads frames from cv2.VideoCapture, processes tracking.
+backend/app/routers/session.py:        if torch.cuda.is_available():
+backend/app/routers/session.py:            allocated_gb = torch.cuda.memory_allocated(0) / (1024 ** 3)
+backend/app/routers/session.py:            total_gb     = torch.cuda.get_device_properties(0).total_memory / (1024 ** 3)
+backend/app/routers/session.py:            cap = cv2.VideoCapture(url)
+backend/app/routers/session.py:            cap_fps = cap.get(cv2.CAP_PROP_FPS)
+backend/app/routers/query.py:Consumes: multipart/form-data { image: UploadFile, query: str, conf_threshold: float }
+backend/app/routers/query.py:import cv2
+backend/app/routers/query.py:import numpy as np
+backend/app/routers/query.py:from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+backend/app/routers/query.py:    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+backend/app/routers/query.py:    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+backend/app/routers/vision.py:Consumes: multipart/form-data  { image: UploadFile, prompt: str, conf_threshold: float, model: str }
+backend/app/routers/vision.py:import cv2
+backend/app/routers/vision.py:import numpy as np
+backend/app/routers/vision.py:import torch
+backend/app/routers/vision.py:from PIL import Image
+backend/app/routers/vision.py:from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+backend/app/routers/vision.py:    img_bgr = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+backend/app/routers/vision.py:    img_rgb = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2RGB)
+backend/app/routers/vision.py:    #         # Convert to PIL Image for transformers processor
+backend/app/routers/vision.py:    #         with torch.no_grad():
+backend/app/main.py:import torch
+backend/app/main.py:                torch.cuda.is_available = lambda: False
+backend/app/main.py:from fastapi import FastAPI
+backend/app/main.py:from fastapi.middleware.cors import CORSMiddleware
+backend/app/main.py:from app.core.patch_transformers import patch_transformers
+backend/app/main.py:patch_transformers()
+backend/app/main.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/app/main.py:    #     from transformers import AutoProcessor, AutoModelForCausalLM
+backend/app/main.py:    has_gpu = torch.cuda.is_available()
+backend/app/main.py:    device_name = torch.cuda.get_device_name(0) if has_gpu else "cpu"
+backend/app/main.py:        round(torch.cuda.get_device_properties(0).total_memory / (1024 ** 3), 2)
+backend/app/models/schemas.py:from pydantic import BaseModel, Field, computed_field
+backend/app/models/schemas.py:    Note: image is sent as multipart UploadFile — not part of this model.
+backend/app/core/config.py:from pydantic_settings import BaseSettings
+backend/app/core/patch_transformers.py:def patch_transformers():
+backend/app/core/patch_transformers.py:    Applies startup monkeypatching to transformers classes.
+backend/app/core/patch_transformers.py:        import transformers
+backend/app/core/patch_transformers.py:        if not hasattr(transformers.PretrainedConfig, "forced_bos_token_id"):
+backend/app/core/patch_transformers.py:            logger.info("Monkeypatching PretrainedConfig.forced_bos_token_id = None for transformers v5 compatibility.")
+backend/app/core/patch_transformers.py:            transformers.PretrainedConfig.forced_bos_token_id = None
+backend/app/core/patch_transformers.py:        if not hasattr(transformers.PreTrainedTokenizer, "additional_special_tokens"):
+backend/app/core/patch_transformers.py:            logger.info("Monkeypatching PreTrainedTokenizer.additional_special_tokens = [] for transformers v5 compatibility.")
+backend/app/core/patch_transformers.py:            transformers.PreTrainedTokenizer.additional_special_tokens = []
+backend/app/core/patch_transformers.py:        if not hasattr(transformers.PreTrainedTokenizerFast, "additional_special_tokens"):
+backend/app/core/patch_transformers.py:            logger.info("Monkeypatching PreTrainedTokenizerFast.additional_special_tokens = [] for transformers v5 compatibility.")
+backend/app/core/patch_transformers.py:            transformers.PreTrainedTokenizerFast.additional_special_tokens = []
+backend/app/core/patch_transformers.py:        logger.error(f"Failed to apply transformers monkeypatch: {e}")
+backend/app/services/segmenter_base.py:import numpy as np
+backend/app/services/tracker.py:import numpy as np
+backend/app/services/tracker.py:            dets: numpy array of shape (N, 6) -> [x1, y1, x2, y2, score, class_id]
+backend/app/services/tracker.py:            img: BGR numpy image frame
+backend/app/services/tracker.py:            numpy array of shape (M, 7) -> [x1, y1, x2, y2, track_id, score, class_id]
+backend/app/services/segmenter.py:import numpy as np
+backend/app/services/segmenter.py:import cv2
+backend/app/services/segmenter.py:import torch
+backend/app/services/segmenter.py:from PIL import Image
+backend/app/services/segmenter.py:            image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+backend/app/services/segmenter.py:                        mask_np = mask_tensor.cpu().numpy().astype(np.uint8)
+backend/app/services/segmenter.py:                            mask_np = cv2.resize(mask_np, (w, h), interpolation=cv2.INTER_NEAREST)
+backend/app/services/segmenter.py:        image_pil = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGB))
+backend/app/services/segmenter.py:            import torch
+backend/app/services/segmenter.py:            with torch.no_grad():
+backend/app/services/segmenter.py:                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/app/services/segmenter.py:                                    if isinstance(sbox, torch.Tensor):
+backend/app/services/segmenter.py:                                        sbox = sbox.cpu().float().numpy()
+backend/app/services/segmenter.py:                            if isinstance(mask, torch.Tensor):
+backend/app/services/segmenter.py:                                mask = mask.cpu().float().numpy().astype(np.uint8)
+backend/app/services/composer.py:import numpy as np
+backend/app/services/composer.py:import cv2
+backend/app/services/composer.py:from PIL import Image
+backend/app/services/composer.py:                # Convert crop image to RGB PIL image if needed
+backend/app/services/composer.py:                    crop_rgb = cv2.cvtColor(crop_image, cv2.COLOR_BGR2RGB)
+backend/app/services/reader.py:import numpy as np
+backend/app/services/reader.py:import cv2
+backend/app/services/reader.py:from PIL import Image
+backend/app/services/reader.py:        crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
+backend/app/services/reader_base.py:import numpy as np
+backend/app/services/detector.py:import torch
+backend/app/services/detector.py:import numpy as np
+backend/app/services/detector.py:from PIL import Image
+backend/app/services/detector.py:        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/app/services/detector.py:        # Convert np.ndarray to PIL Image
+backend/app/services/detector.py:        # Assuming input is BGR or RGB depending on caller, but PIL expects RGB
+backend/app/services/detector.py:        boxes = boxes * torch.Tensor([w, h, w, h])
+backend/app/services/detector.py:import cv2
+backend/app/services/detector.py:        # Convert NumPy image (expecting RGB as per detector standard) to PIL Image
+backend/app/services/detector.py:            with torch.no_grad():
+backend/app/services/detector.py:                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/app/services/detector.py:                        if isinstance(scores, torch.Tensor):
+backend/app/services/detector.py:                            scores = scores.cpu().float().numpy()
+backend/app/services/detector.py:                        if isinstance(boxes, torch.Tensor):
+backend/app/services/detector.py:                            boxes = boxes.cpu().float().numpy()
+backend/app/services/detector_base.py:import numpy as np
+backend/app/services/gemma4.py:import torch
+backend/app/services/gemma4.py:from PIL import Image
+backend/app/services/gemma4.py:from transformers import AutoProcessor
+backend/app/services/gemma4.py:import transformers
+backend/app/services/gemma4.py:if hasattr(transformers, "AutoModelForImageTextToText"):
+backend/app/services/gemma4.py:    from transformers import AutoModelForImageTextToText as VisionModelClass
+backend/app/services/gemma4.py:    from transformers import AutoModelForVision2Seq as VisionModelClass
+backend/app/services/gemma4.py:        device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/app/services/gemma4.py:                torch_dtype=torch.bfloat16,
+backend/app/services/gemma4.py:        ).to(self.model.device, torch.bfloat16)
+backend/app/services/gemma4.py:        with torch.no_grad():
+backend/app/services/gemma4.py:        with torch.no_grad():
+backend/app/services/gemma4.py:        with torch.no_grad():
+backend/app/services/track_manager.py:import numpy as np
+backend/app/services/track_manager.py:            dets: numpy array of shape (N, 6) -> [[x1, y1, x2, y2, score, class_id], ...]
+backend/app/services/tracker_base.py:import numpy as np
+backend/app/services/tracker_base.py:            dets: numpy array of shape (N, 6) -> [[x1, y1, x2, y2, score, class_id], ...]
+backend/app/services/tracker_base.py:            img: BGR image numpy array of shape (H, W, 3)
+backend/app/services/tracker_base.py:            numpy array of shape (M, 7) -> [[x1, y1, x2, y2, track_id, score, class_id], ...]
+backend/app/services/cache.py:import redis
+backend/app/services/cache.py:            self.client = redis.Redis(
+backend/eval/print_mask_coords.py:import torch
+backend/eval/print_mask_coords.py:import numpy as np
+backend/eval/print_mask_coords.py:from PIL import Image
+backend/eval/print_mask_coords.py:    with torch.no_grad():
+backend/eval/print_mask_coords.py:        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/print_mask_coords.py:        if isinstance(mask, torch.Tensor):
+backend/eval/print_mask_coords.py:            mask = mask.cpu().numpy()
+backend/eval/test_pending_target_ws.py:Pending-target E2E test against a REAL running uvicorn server (no TestClient).
+backend/eval/test_pending_target_ws.py:  cd backend && conda run -n env_sam3 uvicorn app.main:app --host 127.0.0.1 --port 8001
+backend/eval/test_pending_target_ws.py:import cv2, numpy as np, websockets
+backend/eval/test_pending_target_ws.py:    _, buf = cv2.imencode(".jpg", bgr, [cv2.IMWRITE_JPEG_QUALITY, 75])
+backend/eval/test_pending_target_ws.py:    cap = cv2.VideoCapture(path); cap.set(cv2.CAP_PROP_POS_FRAMES, start)
+backend/eval/test_pending_target_ws.py:    hdr("Connecting to real uvicorn server")
+backend/eval/test_tracker_sequence.py:import cv2
+backend/eval/test_tracker_sequence.py:import numpy as np
+backend/eval/test_tracker_sequence.py:import torch
+backend/eval/test_tracker_sequence.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_tracker_sequence.py:        img = cv2.imread(str(img_path))
+backend/eval/test_tracker_sequence.py:        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/test_tracker_sequence.py:            cv2.rectangle(img, (x1, y1), (x2, y2), (200, 211, 34), 2) # Teal-ish green
+backend/eval/test_tracker_sequence.py:            cv2.putText(img, tag, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 211, 34), 2)
+backend/eval/test_tracker_sequence.py:        cv2.imwrite(str(out_path), img)
+backend/eval/test_full_scenario.py:import cv2
+backend/eval/test_full_scenario.py:import numpy as np
+backend/eval/test_full_scenario.py:import torch
+backend/eval/test_full_scenario.py:from app.core.patch_transformers import patch_transformers
+backend/eval/test_full_scenario.py:patch_transformers()
+backend/eval/test_full_scenario.py:device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_full_scenario.py:cap = cv2.VideoCapture(VIDEO_PATH)
+backend/eval/test_full_scenario.py:width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+backend/eval/test_full_scenario.py:height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+backend/eval/test_full_scenario.py:fps    = cap.get(cv2.CAP_PROP_FPS) or 25.0
+backend/eval/test_full_scenario.py:total  = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+backend/eval/test_full_scenario.py:seed_rgb = cv2.cvtColor(seed_frame, cv2.COLOR_BGR2RGB)
+backend/eval/test_full_scenario.py:    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/eval/test_sam3_native_tracking.py:import cv2
+backend/eval/test_sam3_native_tracking.py:import torch
+backend/eval/test_sam3_native_tracking.py:import numpy as np
+backend/eval/test_sam3_native_tracking.py:    cap = cv2.VideoCapture(input_path)
+backend/eval/test_sam3_native_tracking.py:        cv2.imwrite(os.path.join(temp_dir, f"{extracted:05d}.jpg"), frame)
+backend/eval/test_sam3_native_tracking.py:                if isinstance(binary_masks, torch.Tensor):
+backend/eval/test_sam3_native_tracking.py:                    out_mask_logits = torch.from_numpy((binary_masks.astype(np.float32) * 2.0) - 1.0)
+backend/eval/test_sam3_native_tracking.py:                    out_mask_logits = torch.tensor(binary_masks, dtype=torch.float32) * 2.0 - 1.0
+backend/eval/test_sam3_native_tracking.py:        mask = (out_mask_logits[0] > 0.0).cpu().numpy().astype(np.uint8)
+backend/eval/test_sam3_native_tracking.py:    cap = cv2.VideoCapture(input_path)
+backend/eval/test_sam3_native_tracking.py:    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+backend/eval/test_sam3_native_tracking.py:    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+backend/eval/test_sam3_native_tracking.py:    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+backend/eval/test_sam3_native_tracking.py:    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+backend/eval/test_sam3_native_tracking.py:    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+backend/eval/test_sam3_native_tracking.py:            overlay[mask_indices] = cv2.addWeighted(frame, 0.4, overlay_mask, 0.6, 0)[mask_indices]
+backend/eval/test_sam3_native_tracking.py:                cv2.rectangle(overlay, (x_min, y_min), (x_max, y_max), (0, 165, 255), 2)
+backend/eval/test_sam3_native_tracking.py:                cv2.putText(overlay, tag, (x_min, y_min - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 165, 255), 2)
+backend/eval/test_video_pipeline.py:import cv2
+backend/eval/test_video_pipeline.py:import numpy as np
+backend/eval/test_video_pipeline.py:import torch
+backend/eval/test_video_pipeline.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_video_pipeline.py:    cap = cv2.VideoCapture(input_path)
+backend/eval/test_video_pipeline.py:    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+backend/eval/test_video_pipeline.py:    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+backend/eval/test_video_pipeline.py:    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+backend/eval/test_video_pipeline.py:    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+backend/eval/test_video_pipeline.py:    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+backend/eval/test_video_pipeline.py:            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/eval/test_video_pipeline.py:                    overlay[mask_indices] = cv2.addWeighted(frame, 0.4, overlay_mask, 0.6, 0)[mask_indices]
+backend/eval/test_video_pipeline.py:                cv2.rectangle(overlay, (x1, y1), (x2, y2), (200, 211, 34), 2)
+backend/eval/test_video_pipeline.py:                cv2.putText(overlay, tag, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 211, 34), 2)
+backend/eval/detector_speed.py:import torch
+backend/eval/detector_speed.py:import numpy as np
+backend/eval/detector_speed.py:from PIL import Image
+backend/eval/detector_speed.py:import cv2
+backend/eval/detector_speed.py:    if torch.cuda.is_available():
+backend/eval/detector_speed.py:        allocated = torch.cuda.memory_allocated() / (1024 ** 2)
+backend/eval/detector_speed.py:        reserved = torch.cuda.memory_reserved() / (1024 ** 2)
+backend/eval/detector_speed.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/detector_speed.py:        img = cv2.imread(IMAGE_PATH)
+backend/eval/detector_speed.py:        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/detector_speed.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/detector_speed.py:    from transformers import AutoProcessor, AutoModelForCausalLM
+backend/eval/detector_speed.py:    with torch.no_grad():
+backend/eval/detector_speed.py:        with torch.no_grad():
+backend/eval/detector_speed.py:    print(f"CUDA Available: {torch.cuda.is_available()}")
+backend/eval/detector_speed.py:    if torch.cuda.is_available():
+backend/eval/detector_speed.py:        print(f"Device Name: {torch.cuda.get_device_name(0)}")
+backend/eval/detector_speed.py:    if torch.cuda.is_available():
+backend/eval/detector_speed.py:        torch.cuda.empty_cache()
+backend/eval/test_text_only.py:import torch
+backend/eval/test_text_only.py:import numpy as np
+backend/eval/test_text_only.py:from PIL import Image
+backend/eval/test_text_only.py:    with torch.no_grad():
+backend/eval/test_text_only.py:        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_text_only.py:        if isinstance(mask, torch.Tensor):
+backend/eval/test_text_only.py:            mask = mask.cpu().numpy()
+backend/eval/test_text_only.py:        if isinstance(box, torch.Tensor):
+backend/eval/test_text_only.py:            box = box.cpu().numpy()
+backend/eval/test_text_only.py:        if isinstance(score, torch.Tensor):
+backend/eval/test_pending_target.py:import cv2
+backend/eval/test_pending_target.py:import numpy as np
+backend/eval/test_pending_target.py:from app.core.patch_transformers import patch_transformers
+backend/eval/test_pending_target.py:patch_transformers()
+backend/eval/test_pending_target.py:    _, buf = cv2.imencode(".jpg", img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 75])
+backend/eval/test_pending_target.py:    cap = cv2.VideoCapture(path)
+backend/eval/test_pending_target.py:    cap.set(cv2.CAP_PROP_POS_FRAMES, start)
+backend/eval/test_sam3_video_only.py:import cv2
+backend/eval/test_sam3_video_only.py:import numpy as np
+backend/eval/test_sam3_video_only.py:import torch
+backend/eval/test_sam3_video_only.py:    cap = cv2.VideoCapture(input_path)
+backend/eval/test_sam3_video_only.py:    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+backend/eval/test_sam3_video_only.py:    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+backend/eval/test_sam3_video_only.py:    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+backend/eval/test_sam3_video_only.py:    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+backend/eval/test_sam3_video_only.py:    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+backend/eval/test_sam3_video_only.py:    from PIL import Image
+backend/eval/test_sam3_video_only.py:            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/eval/test_sam3_video_only.py:            with torch.no_grad():
+backend/eval/test_sam3_video_only.py:                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_sam3_video_only.py:                        if isinstance(scores, torch.Tensor):
+backend/eval/test_sam3_video_only.py:                            scores = scores.cpu().float().numpy()
+backend/eval/test_sam3_video_only.py:                        if isinstance(boxes, torch.Tensor):
+backend/eval/test_sam3_video_only.py:                            boxes = boxes.cpu().float().numpy()
+backend/eval/test_sam3_video_only.py:                        if isinstance(masks, torch.Tensor):
+backend/eval/test_sam3_video_only.py:                            masks = masks.cpu().float().numpy().astype(np.uint8)
+backend/eval/test_sam3_video_only.py:                            overlay[mask_indices] = cv2.addWeighted(frame, 0.4, overlay_mask, 0.6, 0)[mask_indices]
+backend/eval/test_sam3_video_only.py:                            cv2.rectangle(overlay, (x1, y1), (x2, y2), (255, 0, 255), 2)
+backend/eval/test_sam3_video_only.py:                            cv2.putText(overlay, tag, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 255), 2)
+backend/eval/test_gemma4_ocr.py:import torch
+backend/eval/test_gemma4_ocr.py:import cv2
+backend/eval/test_gemma4_ocr.py:import numpy as np
+backend/eval/test_gemma4_ocr.py:from PIL import Image
+backend/eval/test_gemma4_ocr.py:from transformers import AutoProcessor, AutoModelForImageTextToText
+backend/eval/test_gemma4_ocr.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_gemma4_ocr.py:            torch_dtype=torch.bfloat16,
+backend/eval/test_gemma4_ocr.py:        ).to(model.device, torch.bfloat16)
+backend/eval/test_gemma4_ocr.py:        with torch.no_grad():
+backend/eval/test_gemma4_ocr.py:        # Load the original image using cv2 to draw text on it
+backend/eval/test_gemma4_ocr.py:        img_cv = cv2.imread(str(img_path))
+backend/eval/test_gemma4_ocr.py:            cv2.putText(img_cv, f"Gemma 4 OCR: {clean_text}", (50, 50),
+backend/eval/test_gemma4_ocr.py:                        cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0, 0, 255), 2)
+backend/eval/test_gemma4_ocr.py:            cv2.rectangle(img_cv, (676, 180), (742, 206), (0, 255, 0), 2)
+backend/eval/test_gemma4_ocr.py:            cv2.imwrite(out_path, img_cv)
+backend/eval/test_tracker_video.py:import cv2
+backend/eval/test_tracker_video.py:import numpy as np
+backend/eval/test_tracker_video.py:import torch
+backend/eval/test_tracker_video.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_tracker_video.py:    cap = cv2.VideoCapture(input_path)
+backend/eval/test_tracker_video.py:    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+backend/eval/test_tracker_video.py:    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+backend/eval/test_tracker_video.py:    fps = cap.get(cv2.CAP_PROP_FPS) or 25.0
+backend/eval/test_tracker_video.py:    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+backend/eval/test_tracker_video.py:    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+backend/eval/test_tracker_video.py:    out = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
+backend/eval/test_tracker_video.py:            # Grounding DINO expects RGB numpy array
+backend/eval/test_tracker_video.py:            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/eval/test_tracker_video.py:                cv2.rectangle(frame, (x1, y1), (x2, y2), (200, 211, 34), 2)
+backend/eval/test_tracker_video.py:                cv2.putText(frame, tag, (x1, y1 - 8), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 211, 34), 2)
+backend/eval/test_cache_performance.py:import cv2
+backend/eval/test_cache_performance.py:import numpy as np
+backend/eval/test_cache_performance.py:from fastapi.testclient import TestClient
+backend/eval/test_cache_performance.py:from app.core.patch_transformers import patch_transformers
+backend/eval/test_cache_performance.py:patch_transformers()
+backend/eval/test_cache_performance.py:    _, buf = cv2.imencode(".jpg", img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
+backend/eval/test_cache_performance.py:    cap = cv2.VideoCapture(path)
+backend/eval/test_gemma4_endpoint.py:from fastapi.testclient import TestClient
+backend/eval/test_session_history.py:import cv2
+backend/eval/test_session_history.py:import numpy as np
+backend/eval/test_session_history.py:from fastapi.testclient import TestClient
+backend/eval/test_session_history.py:from app.core.patch_transformers import patch_transformers
+backend/eval/test_session_history.py:patch_transformers()
+backend/eval/test_session_history.py:    _, buf = cv2.imencode(".jpg", img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
+backend/eval/test_session_history.py:    cap = cv2.VideoCapture(path)
+backend/eval/test_dual_backend.py:import cv2
+backend/eval/test_dual_backend.py:import torch
+backend/eval/test_dual_backend.py:import numpy as np
+backend/eval/test_dual_backend.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_dual_backend.py:            cap = cv2.VideoCapture(video_path)
+backend/eval/test_dual_backend.py:                cv2.imwrite(image_path, frame)
+backend/eval/test_dual_backend.py:    img = cv2.imread(image_path)
+backend/eval/test_dual_backend.py:    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/test_integrated_pipeline.py:import torch
+backend/eval/test_integrated_pipeline.py:import cv2
+backend/eval/test_integrated_pipeline.py:import numpy as np
+backend/eval/test_integrated_pipeline.py:        from PIL import Image
+backend/eval/test_integrated_pipeline.py:    print(f"✔ CUDA Available: {torch.cuda.is_available()}")
+backend/eval/test_integrated_pipeline.py:    img = cv2.imread(img_path)
+backend/eval/test_integrated_pipeline.py:    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/test_integrated_pipeline.py:    with torch.no_grad():
+backend/eval/test_integrated_pipeline.py:        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_integrated_pipeline.py:            if isinstance(sbox, torch.Tensor):
+backend/eval/test_integrated_pipeline.py:                sbox = sbox.cpu().numpy()
+backend/eval/test_integrated_pipeline.py:        if isinstance(mask, torch.Tensor):
+backend/eval/test_integrated_pipeline.py:            mask = mask.cpu().numpy().astype(np.uint8)
+backend/eval/test_integrated_pipeline.py:        blended = cv2.addWeighted(img, 0.6, overlay, 0.4, 0)
+backend/eval/test_integrated_pipeline.py:        cv2.rectangle(blended, (tx1_i, ty1_i), (tx2_i, ty2_i), (255, 100, 0), 2)
+backend/eval/test_integrated_pipeline.py:        cv2.putText(blended, f"Track {track_id} (License Plate)", (tx1_i, ty1_i - 8),
+backend/eval/test_integrated_pipeline.py:                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+backend/eval/test_integrated_pipeline.py:        cv2.imwrite(out_path, blended)
+backend/eval/test_integrated_pipeline.py:        cv2.imwrite(zoom_path, crop)
+backend/eval/test_tracker.py:import numpy as np
+backend/eval/test_detector.py:import cv2
+backend/eval/test_detector.py:import torch
+backend/eval/test_detector.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_detector.py:        image_bgr = cv2.imread(img_path)
+backend/eval/test_detector.py:        # Grounding DINO usually expects RGB for inference (PIL handles it, but we pass the raw array)
+backend/eval/test_detector.py:        # Our detector converts from array -> PIL RGB. So we should pass RGB.
+backend/eval/test_detector.py:        image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+backend/eval/test_detector.py:                cv2.rectangle(img_draw, (x1, y1), (x2, y2), (0, 0, 255), 2)
+backend/eval/test_detector.py:                cv2.putText(img_draw, f"{label} {score:.2f}", (x1, max(y1 - 10, 0)),
+backend/eval/test_detector.py:                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
+backend/eval/test_detector.py:            cv2.imwrite(str(out_dir / out_name), img_draw)
+backend/eval/test_ocr_images.py:import cv2
+backend/eval/test_ocr_images.py:import numpy as np
+backend/eval/test_ocr_images.py:import torch
+backend/eval/test_ocr_images.py:from PIL import Image, ImageDraw
+backend/eval/test_ocr_images.py:from transformers import AutoProcessor, AutoModelForCausalLM
+backend/eval/test_ocr_images.py:    device = "cuda" if torch.cuda.is_available() else "cpu"
+backend/eval/test_ocr_images.py:        # Load image with PIL
+backend/eval/test_ocr_images.py:        with torch.no_grad():
+backend/eval/test_ocr_images.py:        img_cv = cv2.imread(str(img_path))
+backend/eval/test_ocr_images.py:            cv2.rectangle(img_cv, (xmin, ymin), (xmax, ymax), (200, 211, 34), 2)
+backend/eval/test_ocr_images.py:            cv2.putText(img_cv, clean_label, (xmin, ymin - 6), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (200, 211, 34), 2)
+backend/eval/test_ocr_images.py:        cv2.imwrite(str(out_path), img_cv)
+backend/eval/check_mask_pixels.py:import torch
+backend/eval/check_mask_pixels.py:import numpy as np
+backend/eval/check_mask_pixels.py:from PIL import Image
+backend/eval/check_mask_pixels.py:    with torch.no_grad():
+backend/eval/check_mask_pixels.py:        with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/check_mask_pixels.py:        if isinstance(mask, torch.Tensor):
+backend/eval/check_mask_pixels.py:            mask = mask.cpu().numpy()
+backend/eval/test_segmenter.py:import cv2
+backend/eval/test_segmenter.py:import numpy as np
+backend/eval/test_segmenter.py:    img = cv2.imread(img_path)
+backend/eval/test_segmenter.py:        blended = cv2.addWeighted(img, 0.5, overlay, 0.5, 0)
+backend/eval/test_segmenter.py:        cv2.imwrite(out_path, blended)
+backend/eval/test_sam3_format.py:import torch
+backend/eval/test_sam3_format.py:import numpy as np
+backend/eval/test_sam3_format.py:from PIL import Image
+backend/eval/test_sam3_format.py:            with torch.no_grad():
+backend/eval/test_sam3_format.py:                with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_sam3_format.py:                if isinstance(mask, torch.Tensor):
+backend/eval/test_sam3_format.py:                    mask = mask.cpu().numpy()
+backend/eval/test_sam3_format.py:                if isinstance(sbox, torch.Tensor):
+backend/eval/test_sam3_format.py:                    sbox = sbox.cpu().numpy()
+backend/eval/test_sam3_format.py:                if isinstance(score, torch.Tensor):
+backend/eval/test_reader_voting.py:import cv2
+backend/eval/test_reader_voting.py:import numpy as np
+backend/eval/test_reader_voting.py:    img1 = cv2.imread(img1_path)
+backend/eval/test_reader_voting.py:    img2 = cv2.imread(img2_path)
+backend/eval/test_reader_voting.py:                    cv2.putText(crop, f"Voting OCR: {vote_res['text']}", (10, 25),
+backend/eval/test_reader_voting.py:                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+backend/eval/test_reader_voting.py:                    cv2.imwrite(out_path, crop)
+backend/eval/test_sam3.py:import cv2
+backend/eval/test_sam3.py:import numpy as np
+backend/eval/test_sam3.py:    img = cv2.imread(img_path)
+backend/eval/test_sam3.py:            blended = cv2.addWeighted(img, 0.5, overlay, 0.5, 0)
+backend/eval/test_sam3.py:            cv2.imwrite(out_path, blended)
+backend/eval/test_api_endpoints.py:from fastapi.testclient import TestClient
+backend/eval/test_sam3_standalone.py:import numpy as np
+backend/eval/test_sam3_standalone.py:from PIL import Image
+backend/eval/test_sam3_standalone.py:# Ensure cv2 is available
+backend/eval/test_sam3_standalone.py:    import cv2
+backend/eval/test_sam3_standalone.py:    import torch
+backend/eval/test_sam3_standalone.py:        with torch.no_grad():
+backend/eval/test_sam3_standalone.py:            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_sam3_standalone.py:            # Convert PyTorch tensor to numpy
+backend/eval/test_sam3_standalone.py:            if isinstance(mask, torch.Tensor):
+backend/eval/test_sam3_standalone.py:                mask = mask.cpu().numpy().astype(np.uint8)
+backend/eval/test_sam3_standalone.py:            img_cv = cv2.imread(img_path)
+backend/eval/test_sam3_standalone.py:            blended = cv2.addWeighted(img_cv, 0.5, overlay, 0.5, 0)
+backend/eval/test_sam3_standalone.py:            cv2.imwrite(out_path, blended)
+backend/eval/test_composer.py:import cv2
+backend/eval/test_composer.py:import numpy as np
+backend/eval/test_composer.py:    img = cv2.imread(img_path)
+backend/eval/test_dino_standalone.py:import torch
+backend/eval/test_dino_standalone.py:import cv2
+backend/eval/test_dino_standalone.py:import numpy as np
+backend/eval/test_dino_standalone.py:    print(f"CUDA Available: {torch.cuda.is_available()}")
+backend/eval/test_dino_standalone.py:    if torch.cuda.is_available():
+backend/eval/test_dino_standalone.py:        print(f"Device Name: {torch.cuda.get_device_name(0)}")
+backend/eval/test_dino_standalone.py:        cv2.imwrite("images/ocr_check1.png", img)
+backend/eval/test_dino_standalone.py:        img = cv2.imread(img_path)
+backend/eval/test_dino_standalone.py:    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/test_dino_standalone.py:    # Load PIL image for transformation
+backend/eval/test_dino_standalone.py:    from PIL import Image
+backend/eval/test_dino_standalone.py:            cv2.rectangle(img, (x1, y1), (x2, y2), (0, 255, 0), 2)
+backend/eval/test_dino_standalone.py:            cv2.putText(img, label, (x1, y1 - 8),
+backend/eval/test_dino_standalone.py:                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+backend/eval/test_dino_standalone.py:        cv2.imwrite(out_path, img)
+backend/eval/test_api_routing.py:import torch
+backend/eval/test_api_routing.py:import cv2
+backend/eval/test_api_routing.py:import numpy as np
+backend/eval/test_api_routing.py:from fastapi.testclient import TestClient
+backend/eval/test_api_routing.py:            cap = cv2.VideoCapture(video_path)
+backend/eval/test_api_routing.py:                cv2.imwrite(image_path, frame)
+backend/eval/test_live_session.py:equivalent to running against a live uvicorn server, but in-process.
+backend/eval/test_live_session.py:import cv2
+backend/eval/test_live_session.py:import numpy as np
+backend/eval/test_live_session.py:from app.core.patch_transformers import patch_transformers
+backend/eval/test_live_session.py:patch_transformers()
+backend/eval/test_live_session.py:    """Encode a BGR numpy frame as base64 JPEG string."""
+backend/eval/test_live_session.py:    _, buf = cv2.imencode(".jpg", img_bgr, [cv2.IMWRITE_JPEG_QUALITY, 85])
+backend/eval/test_live_session.py:    cap = cv2.VideoCapture(path)
+backend/eval/test_live_session.py:    """Load a static image as a BGR numpy array (acts as a single 'frame')."""
+backend/eval/test_live_session.py:    img = cv2.imread(path)
+backend/eval/test_live_session.py:    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+backend/eval/test_live_session.py:    out = cv2.VideoWriter(tmp.name, fourcc, 25, (320, 240))
+backend/eval/test_sam3_single_pass.py:import cv2
+backend/eval/test_sam3_single_pass.py:import torch
+backend/eval/test_sam3_single_pass.py:import numpy as np
+backend/eval/test_sam3_single_pass.py:from PIL import Image
+backend/eval/test_sam3_single_pass.py:    img = cv2.imread(img_path)
+backend/eval/test_sam3_single_pass.py:    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+backend/eval/test_sam3_single_pass.py:        with torch.no_grad():
+backend/eval/test_sam3_single_pass.py:            with torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/eval/test_sam3_single_pass.py:                    if isinstance(scores, torch.Tensor):
+backend/eval/test_sam3_single_pass.py:                        scores = scores.cpu().float().numpy()
+backend/eval/test_sam3_single_pass.py:                    if isinstance(boxes, torch.Tensor):
+backend/eval/test_sam3_single_pass.py:                        boxes = boxes.cpu().float().numpy()
+backend/eval/test_sam3_single_pass.py:                    if isinstance(masks, torch.Tensor):
+backend/eval/test_sam3_single_pass.py:                        masks = masks.cpu().float().numpy().astype(np.uint8)
+backend/eval/test_sam3_single_pass.py:                        cv2.rectangle(overlay, (x1, y1), (x2, y2), color, 2)
+backend/eval/test_sam3_single_pass.py:                        cv2.putText(overlay, label_text, (x1, max(y1 - 10, 10)), 
+backend/eval/test_sam3_single_pass.py:                                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
+backend/eval/test_sam3_single_pass.py:                        overlay[mask_indices] = cv2.addWeighted(img, 0.4, overlay_mask, 0.6, 0)[mask_indices]
+backend/eval/test_sam3_single_pass.py:    cv2.imwrite(out_path, overlay)
+backend/test_sam3_frame0.py:import cv2
+backend/test_sam3_frame0.py:import torch
+backend/test_sam3_frame0.py:from PIL import Image
+backend/test_sam3_frame0.py:cap = cv2.VideoCapture("../images/inisghtvision_testing_video.mp4")
+backend/test_sam3_frame0.py:    frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+backend/test_sam3_frame0.py:    with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+backend/test_concrete_tracker.py:import numpy as np
+backend/test_concrete_tracker.py:import cv2
+backend/test_session_sim.py:import cv2
+backend/test_session_sim.py:import numpy as np
+backend/test_session_sim.py:cap = cv2.VideoCapture("../images/inisghtvision_testing_video.mp4")
+backend/test_session_sim.py:det = detector.detect(cv2.cvtColor(frame0, cv2.COLOR_BGR2RGB), "person in orange vest", 0.35)
+backend/test_session_sim2.py:import cv2
+backend/test_session_sim2.py:import numpy as np
+backend/test_session_sim2.py:cap = cv2.VideoCapture("../images/inisghtvision_testing_video.mp4")
+backend/test_session_sim2.py:det = detector.detect(cv2.cvtColor(frame0, cv2.COLOR_BGR2RGB), "person in orange vest", 0.35)
+backend/test_sam3_scores.py:import cv2
+backend/test_sam3_scores.py:import numpy as np
+backend/test_sam3_scores.py:cap = cv2.VideoCapture("../images/inisghtvision_testing_video.mp4")

@@ -1,0 +1,2 @@
+backend/app/services/query_parser.py:7: unused import 'ollama' (90% confidence)
+backend/eval/test_ocr_images.py:8: unused import 'ImageDraw' (90% confidence)

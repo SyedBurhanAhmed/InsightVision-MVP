@@ -1,0 +1,71 @@
+<USER_REQUEST>
+Run a full codebase hygiene and discrepancy audit across the entire repo — backend and
+frontend — before defense. Goal: identify real, verifiable issues (unused files, dead code,
+unused dependencies, TODO/mock/placeholder leftovers, and discrepancies between docs and
+actual source) so I can decide what to remove. Do NOT delete or modify anything in this pass
+— flag everything first, I'll confirm before removal.
+
+PHASE 1 — Dead code and unused imports
+1. Backend: install and run pyflakes and vulture (min-confidence 80) across backend/. Report
+   every unused import, undefined name, and unreachable/dead function or class, with file
+   and line number.
+2. Frontend: run depcheck and ts-prune across frontend/. Report every unused npm dependency
+   and every exported function/component/type that's never imported anywhere else.
+
+PHASE 2 — Orphaned files
+For both backend and frontend, identify any source file never imported/referenced by
+anything else in the codebase (excluding entry points, test files, config files). Check
+carefully for dynamic imports, string-based router registration (FastAPI include_router),
+and re-exports via __init__.py/index.ts before flagging something as orphaned — these are
+common false-positive sources. For each candidate, show me the actual grep/search proving
+nothing references it, not just a claim.
+
+PHASE 3 — Suspicious leftover markers
+Grep the entire repo (backend, frontend, docs) for: TODO, FIXME, mock, MOCK, dummy,
+placeholder, hardcode, fake, hypothetical, stub, sample_data, "# temporary", random.uniform(
+used as a fake delay/value, and time.sleep( used to fake processing time. Report every hit
+with file, line, and the actual line content.
+
+PHASE 4 — Unused dependencies
+Cross-check backend/requirements.txt (or pyproject.toml) against what's actually imported in
+the codebase — flag any listed package never imported anywhere. Same check for
+frontend/package.json against actual imports.
+
+PHASE 5 — Doc-to-source drift
+For every file in docs/, check every file path, function name, and metric it references
+against the actual current codebase and actual current benchmark_results.json/results.csv.
+Flag: (a) any referenced file/path that no longer exists, (b) any number in a doc that
+doesn't match its underlying source anymore, (c) any doc describing behavior that's since
+changed in the code without the doc being updated.
+
+PHASE 6 — Redundant/superseded files
+Check for files that look like earlier iterations left behind — duplicate test files (test_
+v1, test_old, _backup, _copy suffixes), older planning/prompt docs superseded by newer ones,
+or large commented-out code blocks left in place instead of removed. Flag these separately
+from true orphans, since removing them is more judgment-based than the pure dead-code cases.
+
+PHASE 7 — Report only, no auto-fixes
+Write docs/codebase_audit_report.md structured as a table: Category | File:Line | Finding |
+Confidence (High/Medium/Low — use Medium/Low for anything with dynamic-import risk) |
+Recommended action. Do not delete, comment out, or modify any file in this pass. Give me the
+full list and I'll tell you what to actually remove — don't act on this report unprompted.
+`
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-07-13T17:25:30+05:00.
+
+The user's current state is as follows:
+Active Document: /home/burhan/projects/InsightVision-MVP/docs/localizer_and_tracker_decision.md (LANGUAGE_MARKDOWN)
+Cursor is on line: 1
+Other open documents:
+- /home/burhan/projects/InsightVision-MVP/backend/app/services/tracker.py (LANGUAGE_PYTHON)
+- /home/burhan/projects/InsightVision-MVP/backend/eval/benchmark.py (LANGUAGE_PYTHON)
+- /home/burhan/projects/InsightVision-MVP/docs/full_system_verification_report.md (LANGUAGE_MARKDOWN)
+- /home/burhan/projects/InsightVision-MVP/backend/benchmark_cache.py (LANGUAGE_PYTHON)
+- /home/burhan/projects/InsightVision-MVP/docs/localizer_and_tracker_decision.md (LANGUAGE_MARKDOWN)
+Running terminal commands:
+- python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --log-level info (in /home/burhan/projects/InsightVision-MVP/backend, running for 1m28s)
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (Medium) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>

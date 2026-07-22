@@ -1,0 +1,30 @@
+Backend orphans:
+Frontend orphans:
+frontend/eslint.config.js
+frontend/vite.config.ts
+frontend/src/components/pages/VisionLanguage.tsx
+frontend/src/components/pages/FewShotLearning.tsx
+frontend/src/components/figma/ImageWithFallback.tsx
+frontend/src/components/ui/navigation-menu.tsx
+frontend/src/components/ui/dropdown-menu.tsx
+frontend/src/components/ui/sidebar.tsx
+frontend/src/components/ui/input-otp.tsx
+frontend/src/components/ui/context-menu.tsx
+frontend/src/components/ui/calendar.tsx
+frontend/src/components/ui/avatar.tsx
+frontend/src/components/ui/breadcrumb.tsx
+frontend/src/components/ui/tabs.tsx
+frontend/src/components/ui/hover-card.tsx
+frontend/src/components/ui/alert-dialog.tsx
+frontend/src/components/ui/aspect-ratio.tsx
+frontend/src/components/ui/carousel.tsx
+frontend/src/components/ui/pagination.tsx
+frontend/src/components/ui/drawer.tsx
+frontend/src/components/ui/slider.tsx
+frontend/src/components/ui/sonner.tsx
+frontend/src/components/ui/scroll-area.tsx
+frontend/src/components/ui/progress.tsx
+frontend/src/components/ui/toggle-group.tsx
+frontend/src/components/ui/menubar.tsx
+frontend/src/components/ui/resizable.tsx
+frontend/src/components/ui/accordion.tsx

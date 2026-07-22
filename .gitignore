@@ -66,3 +66,18 @@ pip-selfcheck.json
 *.ntvs*
 *.njsproj
 *.sln
+
+# --- Data Storage ---
+data/images/*
+data/annotations/*
+!data/images/.gitkeep
+!data/annotations/.gitkeep# Ignore large videos and visual outputs
+images/long_output3.mp4
+images/output/
+outputs/
+*.mp4
+*.png
+*.jpg
+*.pth
+*.log
+ollama.log

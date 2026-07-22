@@ -1,321 +1,737 @@
-import { useState } from 'react';
-import { Video, Play, Pause, Square, Upload, Settings, Camera } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { API_BASE_URL, WS_BASE_URL } from '../../lib/api-config';
+import { 
+  Upload, Play, Square, Send, Camera, Tv, Cpu, MessageSquare, 
+  Activity, ShieldAlert, CheckCircle2, RefreshCw, ListFilter
+} from 'lucide-react';
+
+interface Track {
+  track_id: number;
+  label: string;
+  bbox: [number, number, number, number];
+  confidence: number;
+  backend: string;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: 'user' | 'system';
+  type: 'command' | 'status' | 'result' | 'error';
+  text: string;
+  timestamp: string;
+}
+
+const PRE_SAVED_CAMERAS = [
+  { name: 'Lab Cam 1 - Front Entrance', url: 'rtsp://192.168.1.50/stream1' },
+  { name: 'Lab Cam 2 - Server Rack GPU', url: 'rtsp://192.168.1.51/stream1' },
+  { name: 'Lab Cam 3 - Assembly Line', url: 'rtsp://192.168.1.52/stream1' },
+];
 
 export default function LiveCamera() {
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [fps, setFps] = useState(0);
-  const [resolution, setResolution] = useState('1920x1080');
-  const [detectionTargets, setDetectionTargets] = useState('');
-  const [confidenceThreshold, setConfidenceThreshold] = useState(0.5);
-  const [useHybrid, setUseHybrid] = useState(true);
-  const [uploadProgress, setUploadProgress] = useState(0);
+  const [sourceMode, setSourceMode] = useState<'upload' | 'webcam' | 'rtsp'>('upload');
+  const [localizer, setLocalizer] = useState<'grounding_dino' | 'sam3'>('grounding_dino');
+  
+  // File upload state
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoSrc, setVideoSrc] = useState<string>('');
 
-  const handleFileUpload = () => {
-    if (uploadProgress > 0) return;
-    setUploadProgress(1);
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setTimeout(() => setUploadProgress(0), 1000);
-          return 100;
+  // RTSP state
+  const [rtspUrl, setRtspUrl] = useState(PRE_SAVED_CAMERAS[0].url);
+  const [customRtsp, setCustomRtsp] = useState('');
+
+  // Connection/Session state
+  const [connState, setConnState] = useState<'DISCONNECTED' | 'CONNECTING' | 'READY' | 'CLOSED'>('DISCONNECTED');
+  const [command, setCommand] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [sessionId, setSessionId] = useState('');
+  const [latestTracks, setLatestTracks] = useState<Track[]>([]);
+  const [frameCounter, setFrameCounter] = useState(0);
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const frameSeqRef = useRef<number>(0);
+  const isWaitingForAckRef = useRef<boolean>(false);
+  const latestTracksRef = useRef<Track[]>([]);
+  const isSessionActiveRef = useRef<boolean>(false);
+  const lastFrameTimeRef = useRef<number>(0);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Load default model config on mount
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/api/config`)
+      .then((res) => res.json())
+      .then((cfg) => {
+        if (cfg && cfg.default_model) {
+          setLocalizer(cfg.default_model);
         }
-        return prev + 15;
-      });
-    }, 200);
-  };
+      })
+      .catch((err) => console.warn("Failed to load settings config in LiveCamera:", err));
+  }, []);
 
-  const handleStartStop = () => {
-    if (isStreaming) {
-      setIsStreaming(false);
-      setFps(0);
-    } else {
-      setIsStreaming(true);
-      // Simulate FPS
-      setFps(58);
+  // Auto scroll to chat bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
+
+  // Clean up session on unmount
+  useEffect(() => {
+    return () => {
+      isSessionActiveRef.current = false;
+      if (wsRef.current) {
+        wsRef.current.close();
+      }
+      stopWebcamTracks();
+    };
+  }, []);
+
+  // Listen for video seeked event to feed the next frame (upload mode)
+  useEffect(() => {
+    const video = videoRef.current;
+    if (video && sourceMode === 'upload') {
+      const onSeeked = () => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN && !isWaitingForAckRef.current && isSessionActiveRef.current) {
+          sendNextFrame();
+        }
+      };
+      video.addEventListener('seeked', onSeeked);
+      return () => {
+        video.removeEventListener('seeked', onSeeked);
+      };
+    }
+  }, [videoSrc, sourceMode]);
+
+  // Frame processing loop & canvas scaling
+  useEffect(() => {
+    let animationFrameId: number;
+
+    const renderLoop = () => {
+      const video = videoRef.current;
+      const canvas = overlayCanvasRef.current;
+      if (video && canvas && sourceMode !== 'rtsp') {
+        const rect = video.getBoundingClientRect();
+        canvas.width = rect.width;
+        canvas.height = rect.height;
+
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          // Draw all active tracks
+          latestTracksRef.current.forEach((t) => {
+            const [x, y, w, h] = t.bbox;
+            const videoW = video.videoWidth || 640;
+            const videoH = video.videoHeight || 480;
+
+            const scaleX = canvas.width / videoW;
+            const scaleY = canvas.height / videoH;
+
+            const cx = x * scaleX;
+            const cy = y * scaleY;
+            const cw = w * scaleX;
+            const ch = h * scaleY;
+
+            // Draw bounding box outline with curated high-vibrancy track colors and neon glow
+            const colors = ['#00D4FF', '#39FF14', '#FF0055', '#FFD60A', '#9D4EDD', '#06B6D4'];
+            const color = colors[t.track_id % colors.length];
+
+            ctx.shadowColor = color;
+            ctx.shadowBlur = 6;
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2.5;
+
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+              ctx.roundRect(cx, cy, cw, ch, 6);
+            } else {
+              ctx.rect(cx, cy, cw, ch);
+            }
+            ctx.stroke();
+
+            // Disable shadow blur for tag rendering to keep text crisp
+            ctx.shadowBlur = 0;
+
+            // Draw clean tag above box
+            const confidencePct = Math.round(t.confidence * 100);
+            const tagText = `${t.label} #${t.track_id} (${confidencePct}%)`;
+            ctx.font = '600 11px Inter, system-ui, sans-serif';
+            const textWidth = ctx.measureText(tagText).width;
+            const tagHeight = 22;
+            const tagY = cy - tagHeight - 4; // 4px margin above box
+            
+            // Tag Background (Premium dark glass overlay)
+            ctx.fillStyle = 'rgba(10, 15, 30, 0.88)';
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+              ctx.roundRect(cx, tagY, textWidth + 24, tagHeight, 4);
+            } else {
+              ctx.rect(cx, tagY, textWidth + 24, tagHeight);
+            }
+            ctx.fill();
+
+            // Colored status indicator dot inside tag
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(cx + 8, tagY + tagHeight / 2, 3.5, 0, 2 * Math.PI);
+            ctx.fill();
+
+            // Tag Text
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillText(tagText, cx + 18, tagY + 15);
+          });
+        }
+      }
+      animationFrameId = requestAnimationFrame(renderLoop);
+    };
+
+    renderLoop();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [sourceMode]);
+
+  const stopWebcamTracks = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const stream = videoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      videoRef.current.srcObject = null;
     }
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setVideoFile(file);
+      const url = URL.createObjectURL(file);
+      setVideoSrc(url);
+      setLatestTracks([]);
+      latestTracksRef.current = [];
+      setMessages([]);
+      stopWebcamTracks();
+      if (wsRef.current) {
+        isSessionActiveRef.current = false;
+        wsRef.current.close();
+      }
+      setConnState('DISCONNECTED');
+    }
+  };
+
+  const addSystemMessage = (type: ChatMessage['type'], text: string) => {
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        sender: 'system',
+        type,
+        text,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      }
+    ]);
+  };
+
+  const startSession = async () => {
+    if (sourceMode === 'upload' && !videoFile) return;
+
+    setConnState('CONNECTING');
+    setLatestTracks([]);
+    latestTracksRef.current = [];
+    frameSeqRef.current = 0;
+    setFrameCounter(0);
+    isWaitingForAckRef.current = false;
+    isSessionActiveRef.current = true;
+    lastFrameTimeRef.current = performance.now();
+
+    // Configure local webcam
+    if (sourceMode === 'webcam') {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { width: 1280, height: 720 },
+        });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play();
+          };
+        }
+      } catch (err) {
+        console.error('Webcam access error:', err);
+        addSystemMessage('error', 'Failed to access webcam. Please check permissions.');
+        setConnState('DISCONNECTED');
+        return;
+      }
+    } else if (sourceMode === 'upload' && videoRef.current) {
+      videoRef.current.pause();
+      videoRef.current.currentTime = 0;
+    }
+
+    // Connect WebSocket
+    const wsUrl = `${WS_BASE_URL}/ws/session`;
+    
+    addSystemMessage('status', `Connecting WebSocket session to ${localizer === 'sam3' ? 'SAM 3' : 'Grounding DINO'}...`);
+    const ws = new WebSocket(wsUrl);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      const initPayload = {
+        type: 'init',
+        source: sourceMode === 'webcam' ? 'upload' : sourceMode,
+        localizer: localizer,
+        conf: 0.35,
+        fps: 25.0,
+        url: sourceMode === 'rtsp' ? (customRtsp.trim() || rtspUrl) : undefined
+      };
+      ws.send(JSON.stringify(initPayload));
+    };
+
+    ws.onmessage = (event) => {
+      const msg = JSON.parse(event.data);
+
+      if (msg.type === 'session_ready') {
+        setConnState('READY');
+        setSessionId(msg.session_id);
+        isSessionActiveRef.current = true;
+        addSystemMessage('status', `Connected. Live tracking session [${msg.session_id}] is active.`);
+        
+        // Start streaming frames back and forth
+        if (sourceMode !== 'rtsp') {
+          sendNextFrame();
+        }
+      } else if (msg.type === 'frame_update') {
+        const tracks = msg.tracks || [];
+        latestTracksRef.current = tracks;
+        setLatestTracks(tracks);
+        setFrameCounter(msg.frame_idx);
+        isWaitingForAckRef.current = false;
+
+        if (sourceMode === 'webcam') {
+          setTimeout(() => {
+            if (isSessionActiveRef.current) {
+              sendNextFrame();
+            }
+          }, 40);
+        } else if (sourceMode === 'upload') {
+          const now = performance.now();
+          const elapsed = now - lastFrameTimeRef.current;
+          const targetInterval = 1000 / 25; // 40ms
+          const delay = Math.max(0, targetInterval - elapsed);
+
+          setTimeout(() => {
+            if (videoRef.current && !videoRef.current.ended && isSessionActiveRef.current) {
+              lastFrameTimeRef.current = performance.now();
+              videoRef.current.currentTime += 0.04;
+            } else if (videoRef.current && videoRef.current.ended) {
+              stopSession();
+            }
+          }, delay);
+        }
+      } else if (msg.type === 'response') {
+        if (msg.summary) {
+          addSystemMessage('status', msg.summary);
+        }
+      } else if (msg.type === 'query_result') {
+        addSystemMessage('result', `${msg.data.result || JSON.stringify(msg.data)} (${msg.latency_ms}ms)`);
+      } else if (msg.type === 'error') {
+        addSystemMessage('error', `Error (${msg.code}): ${msg.detail || ''}`);
+        if (msg.code === 'camera_disconnected' || msg.code === 'reconnect_failed') {
+          stopSession();
+        }
+      }
+    };
+
+    ws.onclose = () => {
+      setConnState('CLOSED');
+      isSessionActiveRef.current = false;
+      addSystemMessage('status', 'Tracking session closed.');
+      stopWebcamTracks();
+      if (videoRef.current && sourceMode === 'upload') {
+        videoRef.current.pause();
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('WebSocket error:', err);
+      addSystemMessage('error', 'WebSocket connection failed.');
+      setConnState('CLOSED');
+      isSessionActiveRef.current = false;
+      stopWebcamTracks();
+    };
+  };
+
+  const sendNextFrame = () => {
+    const video = videoRef.current;
+    const ws = wsRef.current;
+    if (!video || !ws || ws.readyState !== WebSocket.OPEN || isWaitingForAckRef.current || !isSessionActiveRef.current) {
+      return;
+    }
+    if (sourceMode === 'upload' && video.ended) {
+      return;
+    }
+
+    const offscreen = document.createElement('canvas');
+    offscreen.width = video.videoWidth || 640;
+    offscreen.height = video.videoHeight || 480;
+    const ctx = offscreen.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, offscreen.width, offscreen.height);
+      const dataUrl = offscreen.toDataURL('image/jpeg', 0.65);
+      const base64Data = dataUrl.split(',')[1];
+
+      isWaitingForAckRef.current = true;
+      ws.send(
+        JSON.stringify({
+          type: 'frame',
+          data: base64Data,
+          seq: frameSeqRef.current++,
+        })
+      );
+    }
+  };
+
+  const stopSession = () => {
+    isSessionActiveRef.current = false;
+    if (wsRef.current) {
+      wsRef.current.close();
+    }
+    stopWebcamTracks();
+    setConnState('DISCONNECTED');
+  };
+
+  const sendCommand = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!command.trim() || !wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) return;
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        id: Math.random().toString(36).substr(2, 9),
+        sender: 'user',
+        type: 'command',
+        text: command.trim(),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      }
+    ]);
+
+    wsRef.current.send(
+      JSON.stringify({
+        type: 'command',
+        text: command.trim(),
+      })
+    );
+    setCommand('');
+  };
+
   return (
-    <div className="min-h-screen p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <Video className="w-8 h-8 text-[#FF0040]" strokeWidth={2} />
-          <h1 className="text-4xl font-bold text-white">Live Camera Feed</h1>
+    <div className="min-h-screen p-8 max-w-7xl mx-auto text-white">
+      {/* SOTA Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight text-white mb-2 flex items-center gap-3">
+            <span className="w-2.5 h-6 bg-[#06B6D4] rounded-full inline-block animate-pulse" />
+            Live Tracking Terminal
+          </h1>
+          <p className="text-slate-400 text-sm">Configure live visual pipelines and issue natural language tracking queries.</p>
         </div>
-        <p className="text-gray-400">Real-time video stream with AI detection</p>
+        <div className="flex items-center gap-3 bg-slate-900/50 border border-slate-800/80 px-4 py-2 rounded-xl">
+          <span className={`w-2 h-2 rounded-full ${
+            connState === 'READY' ? 'bg-[#06B6D4] animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.6)]' :
+            connState === 'CONNECTING' ? 'bg-amber-500 animate-pulse' : 'bg-slate-500'
+          }`} />
+          <span className="text-xs uppercase font-bold tracking-wider text-slate-300">
+            {connState} {sessionId && `(${sessionId})`}
+          </span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Video Feed */}
+      {/* Main Grid Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left Side: Pipeline Config & Viewport Panel */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Camera View */}
           <div className="premium-card p-6">
-            <div className="aspect-video bg-black rounded-lg relative overflow-hidden border-2 border-[rgba(220,20,60,0.3)]">
-              {isStreaming ? (
-                <div className="w-full h-full flex items-center justify-center relative">
-                  {/* Simulated Camera Feed */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black"></div>
-                  <div className="relative z-10 text-center">
-                    <div className="animate-pulse">
-                      <Camera className="w-16 h-16 text-[#FF0040] mx-auto mb-4" />
-                      <p className="text-white">Camera Stream Active</p>
-                      <p className="text-sm text-gray-400 mt-2">FPS: {fps}</p>
-                    </div>
-                  </div>
-                  
-                  {/* Live Indicator */}
-                  <div className="absolute top-4 left-4 flex items-center gap-2 bg-[#FF0040] px-3 py-1 rounded-full">
-                    <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    <span className="text-white text-sm font-semibold">LIVE</span>
-                  </div>
-
-                  {/* Stats Overlay */}
-                  <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm px-4 py-2 rounded-lg">
-                    <p className="text-white text-sm">{resolution}</p>
-                    <p className="text-[#39FF14] text-xs">{fps} FPS</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <div className="text-center">
-                    <Video className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                    <p className="text-gray-500">Camera feed inactive</p>
-                    <p className="text-sm text-gray-600 mt-2">Press Start to begin streaming</p>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Controls */}
-            <div className="flex items-center justify-center gap-4 mt-6">
-              <button
-                onClick={handleStartStop}
-                className={`btn-primary px-8 py-3 flex items-center gap-2 transition-all duration-300 ${
-                  isStreaming ? 'bg-gradient-to-r from-red-600 to-red-800' : 'hover:shadow-[0_0_15px_rgba(220,20,60,0.6)] hover:scale-[1.02]'
-                }`}
-              >
-                {isStreaming ? (
-                  <>
-                    <Pause className="w-5 h-5" />
-                    Pause Stream
-                  </>
-                ) : (
-                  <>
-                    <Play className="w-5 h-5" />
-                    Start Stream
-                  </>
-                )}
-              </button>
-              {isStreaming && (
-                <button
-                  onClick={() => {
-                    setIsStreaming(false);
-                    setFps(0);
-                  }}
-                  className="btn-secondary px-6 py-3 flex items-center gap-2"
-                >
-                  <Square className="w-5 h-5" />
-                  Stop
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Upload Video Option */}
-          <div className="premium-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
-              <Upload className="w-5 h-5 text-[#00D4FF]" />
-              Or Upload Video File
-            </h3>
-            <div 
-              onClick={handleFileUpload}
-              className={`border-2 border-dashed ${uploadProgress > 0 ? 'border-[#00D4FF] bg-[rgba(0,212,255,0.02)]' : 'border-[rgba(220,20,60,0.3)] hover:border-[#DC143C]'} rounded-lg p-8 text-center transition-all cursor-pointer relative overflow-hidden`}
-            >
-              {uploadProgress > 0 ? (
-                <div className="relative z-10 flex flex-col items-center justify-center animate-pulse">
-                  <p className="text-[#00D4FF] font-semibold mb-3">Uploading Video... {Math.min(uploadProgress, 100)}%</p>
-                  <div className="w-full max-w-[200px] bg-black rounded-full h-1.5 border border-[#333] overflow-hidden">
-                     <div className="bg-[#00D4FF] h-full rounded-full transition-all duration-200" style={{ width: `${Math.min(uploadProgress, 100)}%` }}></div>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <Upload className="w-12 h-12 text-gray-500 mx-auto mb-4" />
-                  <p className="text-white mb-2">Drop video file here or click to browse</p>
-                  <p className="text-sm text-gray-500">Supports MP4, AVI, MOV (max 500MB)</p>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Settings Panel */}
-        <div className="space-y-6">
-          {/* Camera Settings */}
-          <div className="premium-card p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold text-white flex items-center gap-2">
-                <Settings className="w-5 h-5 text-gray-400" />
-                Camera Settings
-              </h3>
-              {/* Hybrid Logic Toggle */}
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest text-right leading-none">Use<br/>Hybrid</span>
-                <button
-                  onClick={() => setUseHybrid(!useHybrid)}
-                  className={`w-9 h-5 rounded-full transition-all flex items-center px-0.5 ${useHybrid ? 'bg-[#DC143C]' : 'bg-gray-700'}`}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full transition-transform ${useHybrid ? 'translate-x-4' : 'translate-x-0'}`}></div>
-                </button>
-              </div>
-            </div>
             
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Resolution</label>
-                <select
-                  value={resolution}
-                  onChange={(e) => setResolution(e.target.value)}
-                  className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#DC143C]"
-                >
-                  <option className="bg-black text-white" value="640x480">640 × 480</option>
-                  <option className="bg-black text-white" value="1280x720">1280 × 720 (HD)</option>
-                  <option className="bg-black text-white" value="1920x1080">1920 × 1080 (Full HD)</option>
-                  <option className="bg-black text-white" value="3840x2160">3840 × 2160 (4K)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Camera Source</label>
-                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#DC143C]">
-                  <option className="bg-black text-white">Built-in Camera</option>
-                  <option className="bg-black text-white">External USB Camera</option>
-                  <option className="bg-black text-white">IP Camera</option>
-                  <option className="bg-black text-white">RTSP Stream</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-400 mb-2">Frame Rate Target</label>
-                <select className="w-full bg-[rgba(255,255,255,0.05)] border border-[rgba(220,20,60,0.3)] rounded-lg px-4 py-2 text-white focus:outline-none focus:border-[#DC143C]">
-                  <option className="bg-black text-white">30 FPS</option>
-                  <option className="bg-black text-white">60 FPS</option>
-                  <option className="bg-black text-white">120 FPS</option>
-                  <option className="bg-black text-white">Max</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Smart Prompt */}
-          <div className="premium-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Smart Prompt</h3>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={detectionTargets}
-                  onChange={(e) => setDetectionTargets(e.target.value)}
-                  placeholder="e.g., person, red car, safety vest..."
-                  className="flex-1 rounded-lg px-3 py-2 text-white placeholder-[#444] text-sm focus:outline-none focus:ring-1 focus:ring-[#DC143C]/50"
-                  style={{ backgroundColor: '#1a1a1a', border: '1px solid #2e2e2e' }}
-                />
-                <button
-                  className="shrink-0 px-3 py-2 rounded-lg text-xs text-white transition-all duration-200 hover:opacity-90 active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #DC143C, #8B0000)', border: '1px solid rgba(220,20,60,0.3)' }}
-                >
-                  Apply Prompt
-                </button>
-              </div>
+            {/* SOTA Segmented Source Mode Selectors */}
+            <div className="flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center mb-6 pb-6 border-b border-slate-800/55">
               
-              <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm text-gray-400">Confidence Threshold</label>
-                  <span className="text-xs font-mono bg-[#DC143C]/20 text-[#DC143C] px-2 py-0.5 rounded border border-[#DC143C]/30">
-                    {confidenceThreshold.toFixed(2)}
-                  </span>
+              {/* Camera Source Selector */}
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 flex items-center gap-1.5">
+                  <Camera className="w-3 h-3 text-slate-400" />
+                  Capture Source
+                </span>
+                <div className="inline-flex bg-slate-950 p-1.5 rounded-xl border border-slate-800/60 w-full sm:w-auto">
+                  <button
+                    onClick={() => { setSourceMode('upload'); stopSession(); }}
+                    disabled={connState === 'READY' || connState === 'CONNECTING'}
+                    className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                      sourceMode === 'upload' ? 'bg-[#06B6D4] text-black shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Upload Video
+                  </button>
+                  <button
+                    onClick={() => { setSourceMode('webcam'); stopSession(); }}
+                    disabled={connState === 'READY' || connState === 'CONNECTING'}
+                    className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                      sourceMode === 'webcam' ? 'bg-[#06B6D4] text-black shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Webcam
+                  </button>
+                  <button
+                    onClick={() => { setSourceMode('rtsp'); stopSession(); }}
+                    disabled={connState === 'READY' || connState === 'CONNECTING'}
+                    className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                      sourceMode === 'rtsp' ? 'bg-[#06B6D4] text-black shadow-sm' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    RTSP Stream
+                  </button>
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={confidenceThreshold}
-                  onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
-                  className="w-full accent-[#DC143C]"
+              </div>
+
+              {/* Localizer Backend Selector */}
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <span className="text-[10px] uppercase font-bold tracking-widest text-slate-500 flex items-center gap-1.5">
+                  <Cpu className="w-3 h-3 text-slate-400" />
+                  Active Localizer
+                </span>
+                <div className="inline-flex bg-slate-950 p-1.5 rounded-xl border border-slate-800/60 w-full sm:w-auto">
+                  <button
+                    onClick={() => setLocalizer('grounding_dino')}
+                    disabled={connState === 'READY' || connState === 'CONNECTING'}
+                    className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                      localizer === 'grounding_dino' ? 'bg-[#06B6D4] text-black' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    Grounding DINO
+                  </button>
+                  <button
+                    onClick={() => setLocalizer('sam3')}
+                    disabled={connState === 'READY' || connState === 'CONNECTING'}
+                    className={`flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-lg transition-all ${
+                      localizer === 'sam3' ? 'bg-[#06B6D4] text-black' : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    SAM 3
+                  </button>
+                </div>
+              </div>
+
+              {/* Session Controls */}
+              <div className="flex flex-row gap-3 pt-6 sm:pt-0 self-end">
+                {connState === 'READY' ? (
+                  <button
+                    onClick={stopSession}
+                    className="px-5 py-2.5 bg-red-500/10 border border-red-500/30 hover:bg-red-500/20 text-red-400 rounded-xl transition flex items-center gap-2 text-xs font-bold uppercase tracking-wider"
+                  >
+                    <Square className="w-3.5 h-3.5" /> Stop Session
+                  </button>
+                ) : (
+                  <button
+                    disabled={(sourceMode === 'upload' && !videoFile) || connState === 'CONNECTING'}
+                    onClick={startSession}
+                    className="px-5 py-2.5 bg-[#06B6D4]/10 border border-[#06B6D4]/30 hover:bg-[#06B6D4]/20 disabled:opacity-30 disabled:pointer-events-none text-[#06B6D4] rounded-xl transition flex items-center gap-2 text-xs font-bold uppercase tracking-wider shadow-[0_4px_20px_rgba(6,182,212,0.05)]"
+                  >
+                    <Play className="w-3.5 h-3.5" /> Start Session
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Dynamic Camera Configuration Area */}
+            {sourceMode === 'upload' && !videoSrc && (
+              <div className="border border-dashed border-slate-800 rounded-2xl aspect-video flex flex-col justify-center items-center text-slate-500 bg-slate-950/40 p-8 mb-6">
+                <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4">
+                  <Upload className="w-6 h-6 text-slate-400" />
+                </div>
+                <label className="flex items-center gap-2 px-5 py-2.5 bg-[#06B6D4] hover:bg-[#0891B2] text-black font-semibold rounded-xl cursor-pointer transition text-xs uppercase tracking-wider mb-2">
+                  <span>Upload local video</span>
+                  <input type="file" accept="video/*" className="hidden" onChange={handleFileChange} />
+                </label>
+                <p className="text-xs text-slate-600">Select MP4, AVI, or WebM stream formats</p>
+              </div>
+            )}
+
+            {sourceMode === 'rtsp' && (
+              <div className="bg-slate-950/50 rounded-2xl p-6 border border-slate-800/80 mb-6 space-y-4">
+                <div className="flex items-center gap-2 text-slate-400 text-xs uppercase font-bold tracking-widest">
+                  <Tv className="w-4 h-4 text-[#06B6D4]" />
+                  RTSP Server Settings
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-slate-500">Saved Cameras</span>
+                    <select
+                      value={rtspUrl}
+                      onChange={(e) => { setRtspUrl(e.target.value); setCustomRtsp(''); }}
+                      disabled={connState === 'READY' || connState === 'CONNECTING'}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#06B6D4] cursor-pointer"
+                    >
+                      {PRE_SAVED_CAMERAS.map((cam) => (
+                        <option key={cam.name} value={cam.url}>{cam.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <span className="text-xs text-slate-500">Or enter custom RTSP URL</span>
+                    <input
+                      type="text"
+                      placeholder="rtsp://admin:pass@ip:port/stream"
+                      value={customRtsp}
+                      onChange={(e) => setCustomRtsp(e.target.value)}
+                      disabled={connState === 'READY' || connState === 'CONNECTING'}
+                      className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-2.5 text-slate-200 text-sm focus:outline-none focus:border-[#06B6D4]"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Video / Webcam / RTSP Viewport */}
+            {(sourceMode === 'upload' && videoSrc) || sourceMode === 'webcam' ? (
+              <div className="relative border border-slate-800 rounded-2xl overflow-hidden bg-black flex justify-center items-center aspect-video">
+                <video
+                  ref={videoRef}
+                  src={sourceMode === 'upload' ? videoSrc : undefined}
+                  className="w-full h-full max-h-[500px] object-contain"
+                  onPlay={() => {
+                    isWaitingForAckRef.current = false;
+                    sendNextFrame();
+                  }}
+                  controls={connState !== 'READY' && sourceMode === 'upload'}
+                  muted
+                  playsInline
+                />
+                <canvas
+                  ref={overlayCanvasRef}
+                  className="absolute pointer-events-none"
+                  style={{
+                    top: videoRef.current?.offsetTop || 0,
+                    left: videoRef.current?.offsetLeft || 0,
+                    width: videoRef.current?.clientWidth || '100%',
+                    height: videoRef.current?.clientHeight || '100%',
+                  }}
                 />
               </div>
-            </div>
-          </div>
+            ) : null}
 
-          {/* Stream Info */}
-          <div className="premium-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Stream Info</h3>
-            <div className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-gray-400">Status</span>
-                <span className={isStreaming ? 'text-[#39FF14]' : 'text-gray-500'}>
-                  {isStreaming ? 'Active' : 'Inactive'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Frame Rate</span>
-                <span className="text-white">{fps} FPS</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Resolution</span>
-                <span className="text-white">{resolution}</span>
-              </div>
-              <div className="flex justify-between items-start">
-                <span className="text-gray-400">Total Latency</span>
-                <div className="text-right">
-                  <span className="text-white block">{isStreaming ? '12ms' : '—'}</span>
-                  {isStreaming && (
-                    <div className="mt-2 text-xs space-y-1 text-left border-l-2 border-[rgba(255,255,255,0.1)] pl-2">
-                      <div className="flex justify-between gap-4">
-                        <span className="text-gray-500">Pre-processing</span>
-                        <span className="text-[#00D4FF]">2ms</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-gray-500">Model Inference</span>
-                        <span className="text-[#39FF14]">8ms</span>
-                      </div>
-                      <div className="flex justify-between gap-4">
-                        <span className="text-gray-500">NMS / Post</span>
-                        <span className="text-[#FFD60A]">2ms</span>
-                      </div>
-                    </div>
-                  )}
+            {sourceMode === 'rtsp' && connState === 'READY' && (
+              <div className="relative border border-[#06B6D4]/30 rounded-2xl overflow-hidden bg-slate-950 aspect-video flex flex-col justify-center items-center text-center p-8">
+                {/* scanning screen visualizer for RTSP */}
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.05)_0%,transparent_100%)]" />
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-[#06B6D4]/40 shadow-[0_0_12px_rgba(6,182,212,0.8)] animate-[scan_3s_linear_infinite]" />
+                
+                <div className="w-16 h-16 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mb-4 relative z-10">
+                  <Activity className="w-6 h-6 text-[#06B6D4] animate-pulse" />
+                </div>
+                <div className="relative z-10 space-y-2">
+                  <p className="text-[#06B6D4] font-semibold uppercase tracking-wider text-sm">Server-Side Stream Running</p>
+                  <code className="text-slate-400 text-xs block truncate max-w-md mx-auto">{customRtsp.trim() || rtspUrl}</code>
+                  <div className="flex gap-4 items-center justify-center text-slate-500 text-xs font-mono pt-4">
+                    <span className="flex items-center gap-1"><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Frame: {frameCounter}</span>
+                    <span>Backend: {localizer === 'sam3' ? 'SAM 3' : 'DINO'}</span>
+                  </div>
                 </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-400">Buffer</span>
-                <span className="text-white">{isStreaming ? '2 frames' : '—'}</span>
-              </div>
-            </div>
-          </div>
+            )}
 
-          {/* Quick Actions */}
-          <div className="premium-card p-6">
-            <h3 className="text-xl font-semibold text-white mb-4">Quick Actions</h3>
-            <div className="space-y-2">
-              <button className="w-full btn-secondary py-2 text-sm">
-                Enable Detection
-              </button>
-              <button className="w-full btn-secondary py-2 text-sm">
-                Start Tracking
-              </button>
-              <button className="w-full btn-secondary py-2 text-sm">
-                Record Stream
-              </button>
-              <button className="w-full btn-secondary py-2 text-sm">
-                Take Snapshot
-              </button>
-            </div>
+            {/* SOTA Active Targets Bar */}
+            {latestTracks.length > 0 && (
+              <div className="mt-6 pt-6 border-t border-slate-800/80">
+                <div className="text-xs uppercase font-bold text-slate-500 mb-3 flex items-center gap-1.5">
+                  <ListFilter className="w-3.5 h-3.5 text-slate-400" />
+                  Active Tracking Nodes
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {latestTracks.map((t) => (
+                    <div 
+                      key={t.track_id} 
+                      className="flex items-center gap-2 bg-[#06B6D4]/5 border border-[#06B6D4]/15 px-3 py-1.5 rounded-full text-xs text-white transition hover:border-[#06B6D4]/40"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#06B6D4] animate-pulse" />
+                      <span className="font-bold text-slate-300">ID #{t.track_id}</span>
+                      <span className="text-slate-400">{t.label}</span>
+                      <span className="bg-[#06B6D4]/15 text-[#06B6D4] text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">{t.backend}</span>
+                      <span className="text-[#06B6D4] font-medium font-mono">({t.confidence.toFixed(2)})</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Right Side: Command Center Chat Panel */}
+        <div className="flex flex-col h-full min-h-[600px] lg:min-h-[auto]">
+          <div className="premium-card flex flex-col h-full p-6" style={{ maxHeight: '720px' }}>
+            <div className="flex items-center gap-2.5 mb-4 pb-4 border-b border-slate-800/80">
+              <MessageSquare className="w-5 h-5 text-[#06B6D4]" />
+              <div>
+                <h2 className="text-lg font-bold text-white leading-none mb-1">Pipeline Chat</h2>
+                <p className="text-xs text-slate-500">Query and instruct the vision model directly.</p>
+              </div>
+            </div>
+
+            {/* Bubble Thread Log */}
+            <div className="flex-1 overflow-y-auto bg-slate-950/60 rounded-2xl border border-slate-800/60 p-4 space-y-4 min-h-[380px]">
+              {messages.length === 0 ? (
+                <div className="h-full flex flex-col justify-center items-center text-center p-6 text-slate-600">
+                  <MessageSquare className="w-8 h-8 mb-2 opacity-30" />
+                  <p className="text-xs">No activity yet. Start the session and enter <code className="bg-slate-900 px-1 py-0.5 rounded text-[#06B6D4]">track the person</code> to begin.</p>
+                </div>
+              ) : (
+                messages.map((m) => {
+                  const isUser = m.sender === 'user';
+                  return (
+                    <div 
+                      key={m.id} 
+                      className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
+                    >
+                      <div 
+                        className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
+                          isUser 
+                            ? 'bg-[#06B6D4] text-black font-medium rounded-tr-none' 
+                            : m.type === 'error'
+                            ? 'bg-red-500/10 border border-red-500/20 text-red-400 rounded-tl-none flex items-start gap-2'
+                            : m.type === 'result'
+                            ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-tl-none flex items-start gap-2'
+                            : 'bg-slate-900 border border-slate-800 text-slate-200 rounded-tl-none'
+                        }`}
+                      >
+                        {!isUser && m.type === 'error' && <ShieldAlert className="w-4 h-4 mt-0.5 shrink-0" />}
+                        {!isUser && m.type === 'result' && <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />}
+                        <span>{m.text}</span>
+                      </div>
+                      <span className="text-[9px] font-mono text-slate-600 mt-1 px-1">
+                        {m.timestamp}
+                      </span>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Form Input Bar */}
+            <form onSubmit={sendCommand} className="mt-4 flex gap-2 relative">
+              <input
+                type="text"
+                disabled={connState !== 'READY'}
+                value={command}
+                onChange={(e) => setCommand(e.target.value)}
+                placeholder={connState === 'READY' ? 'Type track command or query...' : 'Start tracking session first...'}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-white focus:outline-none focus:border-[#06B6D4] focus:ring-1 focus:ring-[#06B6D4]/30 placeholder-slate-600 disabled:opacity-40 transition-all"
+              />
+              <button
+                type="submit"
+                disabled={connState !== 'READY' || !command.trim()}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-9 h-9 bg-[#06B6D4] hover:bg-[#0891B2] disabled:opacity-20 disabled:pointer-events-none rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
+                aria-label="Send command"
+              >
+                <Send className="w-4 h-4 text-black" strokeWidth={2.5} />
+              </button>
+            </form>
+          </div>
+        </div>
+
       </div>
     </div>
   );

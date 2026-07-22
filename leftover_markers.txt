@@ -1,0 +1,79 @@
+backend/app/models/schemas.py:  - id_int: Unix timestamp integer (web mock compat)
+backend/app/models/schemas.py:    id_int: int = Field(..., description="Unix timestamp integer (web mock compat)")
+backend/app/services/query_parser.py:            logger.warning("GROQ_API_KEY not found or default placeholder. Initializing QueryParser: Ollama local fallback mode active.")
+backend/benchmark_cache.py:    # 1. Create dummy image bytes and query
+backend/benchmark_cache.py:    dummy_image_bytes = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xfc\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82"
+backend/benchmark_cache.py:    dummy_response_data = {
+backend/benchmark_cache.py:    cached_val = cache.get_static_cache(dummy_image_bytes, query, detector_backend, conf_threshold)
+backend/benchmark_cache.py:    time.sleep(0.1357) # match simulated total_ms
+backend/benchmark_cache.py:    cache.set_static_cache(dummy_image_bytes, query, dummy_response_data, detector_backend, conf_threshold)
+backend/benchmark_cache.py:    cached_val_hit = cache.get_static_cache(dummy_image_bytes, query, detector_backend, conf_threshold)
+backend/benchmark_cache.py:    dummy_ocr_result = {
+backend/benchmark_cache.py:    time.sleep(0.320) # match simulated event latency
+backend/benchmark_cache.py:    cache.set_track_cache(track_id, task, dummy_ocr_result, ttl=5)
+frontend/src/components/pages/About.tsx:// intentional TODO placeholders — do NOT guess.
+frontend/src/components/pages/About.tsx:      // TODO: confirm full wording with Waleed before defense
+frontend/src/components/pages/About.tsx:    // TODO: confirm Waleed's email and LinkedIn before defense
+frontend/src/components/pages/About.tsx:    emailDisplay: 'TODO: confirm with Waleed',
+frontend/src/components/pages/About.tsx:      // TODO: confirm full wording with Fatima before defense
+frontend/src/components/pages/About.tsx:    // TODO: confirm Fatima's email and LinkedIn before defense
+frontend/src/components/pages/About.tsx:    emailDisplay: 'TODO: confirm with Fatima',
+frontend/src/components/pages/About.tsx:            {/* TODO: replace '#' with real GitHub repo URL before defense */}
+frontend/src/components/pages/About.tsx:              <span className="text-xs text-amber-400 italic">TODO</span>
+frontend/src/components/pages/About.tsx:            {/* TODO: replace '#' with real documentation URL before defense */}
+frontend/src/components/pages/About.tsx:              <span className="text-xs text-amber-400 italic">TODO</span>
+frontend/src/components/pages/About.tsx:            {/* TODO: replace '#' with real presentation URL before defense */}
+frontend/src/components/pages/About.tsx:              <span className="text-xs text-amber-400 italic">TODO</span>
+frontend/src/components/pages/History.tsx:      // If we got real data from the backend, use it. Otherwise fallback to mock data
+frontend/src/components/pages/History.tsx:    // For local mock delete
+frontend/src/components/pages/History.tsx:    if (id.startsWith('mock-')) {
+frontend/src/components/pages/History.tsx:                placeholder="Search by Session ID, Source, Localizer..."
+frontend/src/components/pages/History.tsx:                className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg pl-12 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-primary transition-colors"
+frontend/src/components/pages/Settings.tsx:                    placeholder="Enter Groq API Key (gsk_...)"
+frontend/src/components/pages/Settings.tsx:                    className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-4 py-2 text-white placeholder-gray-500 focus:outline-none focus:border-primary"
+frontend/src/components/pages/VisionLanguage.tsx:                placeholder="e.g., How many people are in the scene?"
+frontend/src/components/pages/VisionLanguage.tsx:                className="flex-1 bg-[rgba(255,255,255,0.05)] border border-[rgba(0,255,255,0.3)] rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-[#00FFFF]"
+frontend/src/components/pages/VisionLanguage.tsx:                  {/* Thumbnail Placeholder */}
+frontend/src/components/pages/FewShotLearning.tsx:                  placeholder="e.g., Custom Badge, Specific Tool"
+frontend/src/components/pages/FewShotLearning.tsx:                  className="w-full bg-[rgba(255,255,255,0.05)] border border-border rounded-lg px-4 py-2.5 text-white placeholder-gray-500 focus:outline-none focus:border-primary"
+frontend/src/components/pages/ObjectDetection.tsx:// Using real backend detection instead of mock data
+frontend/src/components/pages/ObjectDetection.tsx:                    placeholder="Enter new custom class..."
+frontend/src/components/pages/ObjectDetection.tsx:                    className="flex-1 rounded-lg px-3 py-2 text-white placeholder-[#444] text-sm focus:outline-none focus:ring-1 focus:ring-primary/50 min-w-0"
+frontend/src/components/pages/ObjectDetection.tsx:                  placeholder="e.g. person in white..."
+frontend/src/components/pages/ObjectDetection.tsx:                  className="w-full rounded-lg px-3 py-2.5 text-white placeholder-[#444] text-sm focus:outline-none focus:ring-1 focus:ring-[#06D6A0]/50"
+frontend/src/components/pages/ObjectTracking.tsx:              placeholder="Describe object to track (e.g., 'person in red shirt')..."
+frontend/src/components/pages/ObjectTracking.tsx:              className="w-full rounded-lg px-4 py-3 text-white placeholder-[#3a3a3a] text-sm focus:outline-none focus:ring-1 focus:ring-primary/60 resize-none leading-relaxed"
+frontend/src/components/pages/LiveCamera.tsx:                      placeholder="rtsp://admin:pass@ip:port/stream"
+frontend/src/components/pages/LiveCamera.tsx:                placeholder={connState === 'READY' ? 'Type track command or query...' : 'Start tracking session first...'}
+frontend/src/components/pages/LiveCamera.tsx:                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 pr-12 text-sm text-white focus:outline-none focus:border-[#06B6D4] focus:ring-1 focus:ring-[#06B6D4]/30 placeholder-slate-600 disabled:opacity-40 transition-all"
+frontend/src/components/pages/Dashboard.tsx:                  placeholder="rtsp://admin:pass@ip:port/stream"
+frontend/src/components/pages/Dashboard.tsx:                placeholder={connState === 'READY' ? 'Type track command or query...' : 'Start tracking session first...'}
+frontend/src/components/pages/Dashboard.tsx:                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3.5 pr-12 text-sm text-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/30 placeholder-slate-600 disabled:opacity-40 transition-all animate-pulse-subtle"
+frontend/src/components/ui/input-otp.tsx:  const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] ?? {};
+frontend/src/components/ui/input-otp.tsx:      {hasFakeCaret && (
+frontend/src/components/ui/textarea.tsx:        "resize-none border-input placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 flex field-sizing-content min-h-16 w-full rounded-md border bg-input-background px-3 py-2 text-base transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+frontend/src/components/ui/input.tsx:        "file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border px-3 py-1 text-base bg-input-background transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+frontend/src/components/ui/select.tsx:        "border-input data-[placeholder]:text-muted-foreground [&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:bg-input/30 dark:hover:bg-input/50 flex w-full items-center justify-between gap-2 rounded-md border bg-input-background px-3 py-2 text-sm whitespace-nowrap transition-[color,box-shadow] outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+frontend/src/components/ui/command.tsx:          "placeholder:text-muted-foreground flex h-10 w-full rounded-md bg-transparent py-3 text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+docs/InsightVision_Antigravity_Prompts.md:- If a prompt references a specific model name, treat it as a placeholder — tell the agent your actual choice if it differs.
+docs/InsightVision_Antigravity_Prompts.md:**Definition of done:** `curl localhost:8000/health` returns real JSON with your actual GPU info, not a placeholder.
+docs/InsightVision_Antigravity_Prompts.md:- Load the API key from an environment variable, never hardcode it
+docs/insightvision_prompts_v2 (2).md:     or env var per camera profile — never hardcoded.
+docs/insightvision_prompts_v2 (2).md:test against one of our actual lab cameras, not a mocked stream.
+docs/insightvision_prompts_v2 (2).md:backend/eval/benchmark.py results, not mock stat cards. Show real per-task accuracy, real
+docs/architecture_audit.md:* **Current State**: Loaded in `main.py` lifespan (as `florence_model` and `florence_processor`), and routed in `vision.py` for single-shot phrase grounding. However, `reader.py` (`EasyOCRReader` stub) does *not* utilize it yet.
+docs/FRONTEND_CONTRACT.md:All interactions with the "backend" are fully mocked using `setTimeout` and hardcoded state objects. Because of this, the frontend does not send any HTTP methods, endpoints, `Content-Type` headers, FormData, or JSON bodies. 
+docs/FRONTEND_CONTRACT.md:The frontend behaves purely as a UI mockup, assuming data magically appears in the shape of its local states.
+docs/FRONTEND_CONTRACT.md:## 2. Expected Data Shapes (Based on Mock Data)
+docs/FRONTEND_CONTRACT.md:Even though no API calls are made, we can reverse-engineer the expected backend response shapes from the hardcoded mock objects in the frontend components.
+docs/FRONTEND_CONTRACT.md:When a user submits a natural language query, it fakes a 1.5s processing delay and returns a result object.
+docs/FRONTEND_CONTRACT.md:*   **Masks:** There is no implementation for masks (base64 PNG or RLE) in the mock data, even though the UI has a "segmented" View Mode dropdown.
+docs/full_system_verification_report.md:*   **Fallback History Data:** Mock metrics have been entirely removed. If the backend fails or does not contain session logs, the page cleanly falls back to an empty list showing `"No sessions found"`. **COMPLIANT**
+docs/full_system_verification_report.md:*   **Fallback Data:** Reset to `0.0` default entries. No fake claims are made if the backend is offline. **COMPLIANT**
+docs/verification_pass_2.md:- **Critical Bug Found:** `segmenter.py` was hardcoded to blindly select the first mask proposal: `mask = output["masks"][0]`. As observed during previous eval runs (where the mask output was completely outside the prompt box), the proposal at index 0 is sometimes a lower-confidence background artifact rather than the primary object.
+docs/fatima_backend_audit.md:### Integration Status vs. Mocking
+docs/fatima_backend_audit.md:- **ML / AI Inference**: There are **no machine learning models (like YOLO, GroundingDINO, Llama, Qwen, etc.)** integrated in Fatima's code. In this backend, "models" only refers to Mongoose data models. The backend serves purely as a data-store wrapper; the actual vision inference or query parsing processing is completely stubbed/mocked. The endpoints accept pre-processed AI data (e.g. `trackedObjects` arrays or VLM results) directly from the client via HTTP requests and save them as-is to MongoDB.
+docs/UNIFIED_CONTRACT.md:The web mock data and mobile database models use different keys to represent VLM prompts and answers.
+docs/UNIFIED_CONTRACT.md:| **Responsiveness** | Hardcoded box dimension (`w-20 h-28` in tracking) or absolute pixel coordinates. | Normalized 0-1 decimals or dynamic pixel sizes. | **DECISION NEEDED**: Absolute coordinates break when a video feed changes size responsively. We propose returning both: `bbox` (absolute `[x,y,w,h]` for web) and a new `normalized_bbox` (`[x_min, y_min, x_max, y_max]` in 0.0 - 1.0 range) to future-proof responsive layouts on both Web and Mobile. |
+docs/flutter_contract_audit.md:Fatima's Flutter mobile frontend uses the Dart **`http` package** to call authentication, history, and analytics database endpoints on the backend. However, for **actual visual inference (image/video uploading, object detection, and VLM querying)**, it makes **zero** network requests. These features are fully mocked locally in the screens using hardcoded state lists and static delays (`Future.delayed`).
+docs/flutter_contract_audit.md:## 2. Expected Data Shapes (Based on Mock Data and Database Models)
