@@ -806,31 +806,36 @@ async def _handle_command(ws: WebSocket, state: SessionState, text: str):
     - new_target / track task → synchronous localizer lock-on on the current frame
     - active_track follow-up  → async background task (OCR or segmentation)
     """
-    parser = ml_models.get("query_parser")
-    if parser is None:
-        await _emit(state, {"type": "error", "code": "parser_unavailable"})
-        return
+    # ── [QUERY PARSER / GEMMA 4 COMMENTED OUT FOR SPEED] ─────────────────
+    # parser = ml_models.get("query_parser")
+    # if parser is None:
+    #     await _emit(state, {"type": "error", "code": "parser_unavailable"})
+    #     return
+    #
+    # try:
+    #     parsed = await _run_in_thread(parser.parse, text, active_ctx)
+    # except Exception as e:
+    #     ...
 
-    # Build active-tracks context list for the parser
-    active_ctx = [
-        {"id": meta.track_id, "label": meta.label}
-        for meta in state.track_meta.values()
-    ]
-
-    try:
-        parsed = await _run_in_thread(parser.parse, text, active_ctx)
-    except Exception as e:
-        logger.error(f"[{state.session_id}] QueryParser error: {e}")
-        await _emit(state, {"type": "error", "code": "parse_failed", "detail": str(e)})
-        return
-
-    task      = parsed.get("task", "detect")
-    reference = parsed.get("reference", "new_target")
-    target_desc = parsed.get("target_description") or text
-    track_hint  = parsed.get("track_hint")
+    raw_lower = text.lower().strip()
+    if raw_lower in ("ocr", "read", "read text", "read the text") or raw_lower.startswith("read ") or raw_lower.startswith("ocr "):
+        task = "ocr"
+        reference = "active_track"
+        target_desc = text
+        track_hint = None
+    elif raw_lower in ("segment", "mask", "segment object") or raw_lower.startswith("segment ") or raw_lower.startswith("mask "):
+        task = "segment"
+        reference = "active_track"
+        target_desc = text
+        track_hint = None
+    else:
+        task = "track"
+        reference = "new_target"
+        target_desc = text
+        track_hint = None
 
     logger.info(
-        f"[{state.session_id}] Command | task={task} ref={reference} "
+        f"[{state.session_id}] Command (Bypassed LLM) | task={task} ref={reference} "
         f"target='{target_desc}' hint='{track_hint}'"
     )
 
@@ -876,16 +881,10 @@ async def _handle_command(ws: WebSocket, state: SessionState, text: str):
     # ── Active-track follow-up: dispatch async ────────────────────────────
     track_id = _resolve_track_id(state, track_hint)
     if track_id is None:
-        if parsed.get("needs_clarification"):
-            await _emit(state, {
-                "type": "clarification_needed",
-                "message": "Multiple tracked objects — which one did you mean?",
-            })
-        else:
-            await _emit(state, {
-                "type": "error", "code": "track_not_found",
-                "detail": f"No active track matching '{track_hint}'",
-            })
+        await _emit(state, {
+            "type": "error", "code": "track_not_found",
+            "detail": f"No active track matching '{track_hint}'",
+        })
         return
 
     # Acknowledge immediately so the frame loop stays unblocked
